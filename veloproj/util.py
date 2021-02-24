@@ -30,8 +30,8 @@ def get_parser():
                         help='dimentionality of gene representation (default: 256)')
     parser.add_argument('--h-dim', type=int, default=256,
                         help='dimentionality of intermedeate layers of MLP (default: 256)')
-    parser.add_argument('--k-dim', type=int, default=100,
-                        help='dimentionality of attention keys/queries (default: 100)')
+    parser.add_argument('--k-dim', type=int, default=50,
+                        help='dimentionality of attention keys/queries (default: 50)')
     parser.add_argument('--conv-thred', type=float, default=1e-6,
                         help='convergence threshold of early-stopping (default: 1e-6)')
     parser.add_argument('--n-epochs', type=int, default=10000, metavar='N',
