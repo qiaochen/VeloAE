@@ -158,7 +158,7 @@ def get_baseline_AE(in_dim, z_dim, h_dim):
     
     
     """    
-    from baseline import AutoEncoder
+    from .baseline import AutoEncoder
     model = AutoEncoder(
                 in_dim,
                 z_dim,
@@ -187,7 +187,7 @@ def get_ablation_CohAgg(
     Returns:
         nn.Module: model instance
     """
-    from model import AblationCohAgg
+    from .model import AblationCohAgg
     model = AblationCohAgg(
         edge_index,
         edge_weight,
@@ -225,7 +225,7 @@ def get_ablation_attcomb(
     Returns:
         nn.Module: model instance
     """
-    from model import AblationAttComb
+    from .model import AblationAttComb
     model = AblationAttComb(
         n_genes,
         z_dim,
@@ -268,7 +268,7 @@ def get_veloAE(
     Returns:
         nn.Module: model instance
     """
-    from model import VeloAutoencoder
+    from .model import VeloAutoencoder
     conn = adata.obsp['connectivities']
     nb_indices = adata.uns['neighbors']['indices']
     xs, ys = np.repeat(range(n_cells), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
