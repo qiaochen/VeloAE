@@ -4,11 +4,17 @@
 """
 from .util import get_parser, new_adata, init_model, init_adata, fit_model, do_projection
 import torch
-import os
+import os, logging, timeit
 import numpy as np
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
+    
+    start_time = timeit.default_timer()
+    logger.info("Start processing...")
+    
     parser = get_parser()
     args = parser.parse_args()
     
@@ -22,9 +28,13 @@ def main():
     device = torch.device(args.device)
     
     if not os.path.exists(args.adata):
-        raise
-        
+        raise Exception(f"Did not find Anndata based on input path: {args.adata}. \nPlease specify a correct path.")
+    
+    logger.info("Initializing data...")
     adata = init_adata(args)
+    logger.info("Finished data preprocessing.")
+    logger.info(f"{timeit.default_timer() - start_time:.2}s passed.")
+    
     spliced = adata.layers['Ms']
     unspliced = adata.layers['Mu']
     tensor_s = torch.FloatTensor(spliced).to(device)
@@ -32,7 +42,11 @@ def main():
     tensor_x = torch.FloatTensor(adata.X.toarray()).to(device)
     tensor_v = torch.FloatTensor(adata.layers['stc_velocity']).to(device)
     
+    logger.info("Initializing model...")
     model = init_model(adata, args, device)
+    logger.info("Finished model initialization...")
+    logger.info(f"{timeit.default_timer() - start_time:.2}s passed.")
+    
     inputs = []
     if args.use_x:
         inputs.append(tensor_x)
@@ -42,14 +56,19 @@ def main():
         inputs.append(tensor_u)        
     
     if args.refit == 1:
+        logger.info("Fitting model...")
         model = fit_model(args, adata, model, inputs)
+        logger.info("Finished model fitting.")
+        logger.info(f"{(timeit.default_timer() - start_time)/60:.2}min passed.")
     else:
         if not os.path.exists(args.model_name):
-            raise
+            raise Exception(f"Did not find a valid model file following input path: {args.model_name}. \nPlease specify a trained model, when --refiting is turned off (0).")
             
+        logger.info("Loading model...")
         model.load_state_dict(torch.load(args.model_name))
         model = model.to(device)
         
+    logger.info("Do projection...")
     new_adata = do_projection(model,
                               adata,
                               args,
@@ -57,6 +76,9 @@ def main():
                               tensor_s, 
                               tensor_u, 
                               tensor_v)
+    logger.info("Finished projection...")
+    logger.info(f"{(timeit.default_timer() - start_time)/60:.2}min passed.")
     
     new_adata.write(os.path.join(args.output, "projection.h5ad"))
+    logger.info(f"Low-dimensional results saved in {os.path.join(args.output, "projection.h5ad")}")
         

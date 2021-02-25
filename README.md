@@ -5,17 +5,17 @@ Low-dimensional Projection of Single Cell Velocity with AutoEncoder
 
 ### dependencies:
 
-```
-'numpy',
-'scipy',
-'pandas',
-'matplotlib',
-'scikit-learn',
-'anndata>=0.7.4',
-'scanpy>=1.5.1',
-'scvelo>=0.2.2',
-'pytorch>=1.7',
-'torch-geometric>=1.6.3',
+
+- numpy
+- scipy
+- pandas
+- matplotlib
+- scikit-learn
+- anndata>=0.7.4
+- scanpy>=1.5.1
+- scvelo>=0.2.2
+- [pytorch>=1.7](https://pytorch.org/get-started/locally/)
+- [pytorch-geometric>=1.6.3](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html)
 ```
 
 #### Install using pip
