@@ -33,25 +33,25 @@ Basic execution command and arguments:
 ```
 veloproj --refit 0 --adata /data/groups/yhhuang/scNT/neuron_splicing_lite.h5ad --device cuda:3 --model-name ./notebooks/scNTseq/scNT_model.cpt
 ```
-- arguments:
+- Arguments:
     - --refit: if 0, do not fit a new model, should specify an existing model for projection.
-    - --adata: path to the Anndata with transcriptom, spliced and unspliced mRNA expressions.
-    - --device: gpu or cpu (e.g., cuda:2). Fitting using GPU is much faster than cpu..
+    - --adata: path to the Anndata with X_umap, transcriptom, spliced and unspliced mRNA expressions.
+    - --device: gpu or cpu (e.g., cuda:2). Fitting using GPU is much faster than cpu.
     - --model-name: path to the existing model.
     
 - Output:
     - A new low-dimensional Anndata object with default name "projection.h5ad" in the output folder (default ./)
-    - An uncolorted figure showing the low-dimensional velocity field, stored in folder './figures'.
+    - An uncolored figure showing the low-dimensional velocity field, stored in folder './figures'.
 
 #### Fit a new veloAE model and project velocity into low-dimensional space.
 
 ```
 veloproj --lr 8e-7 --refit 1 --adata /data/groups/yhhuang/scNT/neuron_splicing_lite.h5ad --device cuda:3 --model-name scNT_model.cpt 
 ```
-- arguments:
+- Arguments:
     - --lr: learning rate, (should be tunned to minimize loss robustly)
     - --refit: if 1, fit a new model
-    - --adata: path to the Anndata with transcriptom, spliced and unspliced mRNA expressions.
+    - --adata: path to the Anndata with X_umap, transcriptom, spliced and unspliced mRNA expressions.
     - --device: gpu or cpu. Fitting using GPU is much faster than cpu.
     - --model-name: path for storing the trained model.
     
@@ -59,7 +59,7 @@ veloproj --lr 8e-7 --refit 1 --adata /data/groups/yhhuang/scNT/neuron_splicing_l
     - A trained model with "model-name" in the output folder (default ./).
     - A plot showing the training loss curve in the output folder.
     - A new low-dimensional Anndata instance with default name "projection.h5ad" in the output folder (default ./)
-    - An uncolorted figure showing the low-dimensional velocity field, stored in folder './figures'.
+    - An uncolored figure showing the low-dimensional velocity field, stored in folder './figures'.
 
 Use command line help to investigate more arguments.
 ```
