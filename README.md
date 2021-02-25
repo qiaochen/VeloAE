@@ -27,14 +27,13 @@ pip install git+https://github.com/qiaochen/VeloRep
 
 ### Command line usage
 
-Basic execution method:
+Basic execution command and arguments:
 #### Project velocity into low-dimensional space using a trained model.
 
 ```
-veloproj --lr 8e-7 --refit 0 --adata /data/groups/yhhuang/scNT/neuron_splicing_lite.h5ad --device cuda:3 --model-name ./notebooks/scNTseq/scNT_model.cpt
+veloproj --refit 0 --adata /data/groups/yhhuang/scNT/neuron_splicing_lite.h5ad --device cuda:3 --model-name ./notebooks/scNTseq/scNT_model.cpt
 ```
 - arguments:
-    - --lr: learning rate, (should be tunned to make training successful)
     - --refit: if 0, do not fit a new model, should specify an existing model for projection.
     - --adata: path to the Anndata with transcriptom, spliced and unspliced mRNA expressions.
     - --device: gpu or cpu (e.g., cuda:2). Fitting using GPU is much faster than cpu..
