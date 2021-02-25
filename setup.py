@@ -20,9 +20,12 @@ setup(
             'numpy',
             'scipy',
             'pandas',
+            'matplotlib',
+            'anndata>=0.7.4',
+            'scanpy>=1.5.1',
+            'scvelo>=0.2.2',
             'torch>=1.7',
             'scikit-learn',
             'torch-geometric>=1.6.3',
-            'anndata',
         ]
 )
