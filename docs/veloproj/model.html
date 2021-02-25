@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>veloproj.model API documentation</title>
+<meta name="description" content="VeloAutoencoder module …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>veloproj.model</code></h1>
+</header>
+<section id="section-intro">
+<p>VeloAutoencoder module.</p>
+<p>This module contains the veloAutoencoder and its ablation configurations.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># -*- coding: utf-8 -*-
+&#34;&#34;&#34;VeloAutoencoder module.
+
+This module contains the veloAutoencoder and its ablation configurations.
+
+&#34;&#34;&#34;
+import torch
+from torch import nn
+from torch_geometric.nn import GCNConv
+import numpy as np
+
+
+class Encoder(nn.Module):
+    &#34;&#34;&#34;Encoder
+    
+    &#34;&#34;&#34;
+    def __init__(self, 
+                 in_dim, 
+                 z_dim,
+                 edge_index,
+                 edge_weight,
+                 h_dim=256
+                ):
+        &#34;&#34;&#34;
+        Args:
+            in_dim (int): dimensionality of the input
+            z_dim (int): dimensionality of the low-dimensional space
+            edge_index (LongTensor): shape (2, ?), edge indices
+            edge_weight (FloatTensor): shape (?), edge weights.
+            h_dim (int): dimensionality of intermediate layers in MLP
+            
+        &#34;&#34;&#34;
+        super(Encoder, self).__init__()
+        self.edge_index = edge_index
+        self.edge_weight = edge_weight
+        self.fn = nn.Sequential(
+            nn.Linear(in_dim, h_dim, bias=True),
+            nn.GELU(),
+            nn.Linear(h_dim, z_dim, bias=True),
+            nn.GELU(),
+        )
+        self.gcn1 = GCNConv(z_dim, z_dim, cached=False, add_self_loops=True)
+        self.gcn2 = GCNConv(z_dim, z_dim, cached=False, add_self_loops=True)
+        
+    def forward(self, x):
+        z = self.fn(x)
+        z = self.gcn1(z, edge_index=self.edge_index, edge_weight=self.edge_weight)
+        z = self.gcn2(z, edge_index=self.edge_index, edge_weight=self.edge_weight)
+        return z
+    
+        
+class Decoder(nn.Module):
+    &#34;&#34;&#34;Decoder
+    
+    &#34;&#34;&#34;
+    def __init__(self,
+                z_col_dim,
+                G_rep=None,
+                n_genes=None,
+                g_rep_dim=None,
+                k_dim=32,
+                h_dim=256,
+                device=None,
+                ):
+        &#34;&#34;&#34;
+        Args:
+            z_col_dim (int): size of column vectors in Z.
+            G_rep (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+            n_genes (int): number of genes.
+            g_rep_dim (int): dimensionality of gene representations.
+                # Either G_rep or (n_genes, g_rep_dim) should be provided.
+                # priority is given to G_rep.
+            k_dim (int): dimensionality of keys for attention computation.
+            h_dim (int): dimensionality of intermediate layers of MLP.
+            device (torch.device): torch device object.
+            
+        &#34;&#34;&#34;
+        super(Decoder, self).__init__()
+        self.device = device
+        if not G_rep is None:
+            g_rep_dim = G_rep.shape[-1]
+        self.key_Z = nn.Sequential(
+            nn.Linear(z_col_dim, h_dim),
+            nn.GELU(),
+            nn.Linear(h_dim, k_dim)
+        )
+        self.key_G = nn.Sequential(
+            nn.Linear(g_rep_dim, k_dim),
+            nn.GELU(),
+            nn.Linear(k_dim, k_dim)
+        )
+        self.G_rep = self._init_G_emb(n_genes, g_rep_dim) if G_rep is None else torch.FloatTensor(G_rep).to(device)
+        self.attn = Attention()
+        
+    def _init_G_emb(self, n_genes, rep_dim):
+        embedder = torch.empty(n_genes, rep_dim)
+        nn.init.xavier_normal_(embedder)
+        return nn.Parameter(embedder).to(self.device)
+        
+    def forward(self, Z, return_attn=False):
+        Z = Z.T
+        key = self.key_Z(Z)
+        query = self.key_G(self.G_rep)
+        X_hat_means, p_attn = self.attn(query, key, Z)
+        if return_attn:
+            return X_hat_means.T, p_attn.T
+        return X_hat_means.T
+    
+    
+class Attention(nn.Module):
+    &#34;&#34;&#34;Compute &#39;Scaled Dot Product Attention&#39;.
+    
+    &#34;&#34;&#34;
+    def __init__(self):
+        super(Attention, self).__init__()
+    
+    def forward(self, query, key, value):
+        &#34;&#34;&#34;
+        Args:
+            query (torch.FloatTensor): query vectors identifying the gene profiles to be reconstructed.
+            key (torch.FloatTensor): key vectors identifying the latent profiles to be attended to.
+            value (torch.FloatTensor): Z
+            
+        Returns:
+            FloatTensor: shape (n_genes, n_cells), reconstructed input
+            FloatTensor: shape (n_genes, z_dim), gene by attention distribution matrix
+        &#34;&#34;&#34;
+        
+        d_k = query.size(-1)
+        scores = torch.matmul(query, key.transpose(-2, -1)) / np.sqrt(d_k)
+        p_attn = torch.softmax(scores, dim=-1)
+        return torch.matmul(p_attn, value), p_attn
+
+    
+class AblationEncoder(nn.Module):
+    &#34;&#34;&#34;Encoder for Ablation Study
+    
+    &#34;&#34;&#34;
+    def __init__(self, 
+                 in_dim, 
+                 z_dim,
+                 h_dim=256
+                ):
+        super(AblationEncoder, self).__init__()
+        self.fn = nn.Sequential(
+            nn.Linear(in_dim, h_dim, bias=True),
+            nn.GELU(),
+            nn.Linear(h_dim, z_dim, bias=True),
+            nn.GELU(),
+        )
+                
+    def forward(self, x):
+        z = self.fn(x)
+        return z    
+        
+class AblationDecoder(nn.Module):
+    &#34;&#34;&#34;Decoder for Ablation Study.
+    
+    &#34;&#34;&#34;
+    def __init__(self,
+                z_dim,
+                out_dim,
+                h_dim=256
+                ):
+        super(AblationDecoder, self).__init__()
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        self.fc = nn.Sequential(
+            nn.Linear(z_dim, out_dim),
+        )
+        
+    def forward(self, Z):
+        return self.fc(Z)   
+    
+class AblationCohAgg(nn.Module):
+    &#34;&#34;&#34;Ablation with only Cohort Aggregation.
+    
+    &#34;&#34;&#34;
+    
+    def __init__(self,
+               edge_index,
+               edge_weight,
+               in_dim,
+               z_dim,
+               h_dim=256,
+               device=None
+              ):
+        &#34;&#34;&#34;
+        Args:
+            edge_index (LongTensor): shape (2, ?), edge indices
+            edge_weight (FloatTensor): shape (?), edge weights.
+            in_dim (int): dimensionality of the input
+            z_dim (int): dimensionality of the low-dimensional space
+            h_dim (int): dimensionality of intermediate layers in MLP
+            device (torch.device): torch device object.
+            
+        &#34;&#34;&#34;
+        super(AblationCohAgg, self).__init__()
+        self.device = device
+        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim)
+        self.decoder = AblationDecoder(z_dim, in_dim, h_dim)
+        self.criterion = nn.MSELoss(reduction=&#39;mean&#39;)
+        
+    def forward(self, X):
+        z = self.encoder(X)
+        X_hat = self.decoder(z)
+        return self.criterion(X_hat, X)
+    
+    
+class AblationAttComb(nn.Module):
+    &#34;&#34;&#34;Ablation with only Attentive Combination.
+    
+    &#34;&#34;&#34;
+    def __init__(self,
+               in_dim,
+               z_dim,
+               n_genes,
+               n_cells,
+               h_dim=256,
+               k_dim=100,
+               G_rep=None,
+               g_rep_dim=None,
+               device=None
+              ):
+        &#34;&#34;&#34;
+        
+        Args:
+            in_dim (int): dimensionality of the input
+            z_dim (int): dimensionality of the low-dimensional space
+            n_genes (int): number of genes
+            n_cells (int): number of cells
+            h_dim (int): dimensionality of intermediate layers in MLP
+            k_dim (int): dimensionality of keys for attention computation
+            G_rep (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+            g_rep_dim (int): dimensionality of gene representations.
+                # Either G_rep or (n_genes, g_rep_dim) should be provided.
+                # priority is given to G_rep.
+            device (torch.device): torch device object.
+            
+        &#34;&#34;&#34;
+        super(AblationAttComb, self).__init__()
+        self.device = device
+        self.encoder = AblationEncoder(in_dim, z_dim, h_dim=h_dim)
+        self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, device)
+        self.criterion = nn.MSELoss(reduction=&#39;mean&#39;)
+        
+    def forward(self, X):
+        z = self.encoder(X)
+        X_hat = self.decoder(z)
+        return self.criterion(X_hat, X)    
+    
+
+class VeloAutoencoder(nn.Module):
+    &#34;&#34;&#34;Proposed VeloAutoencoder with both mechanisms.
+        
+    &#34;&#34;&#34;
+    
+    def __init__(self,
+               edge_index,
+               edge_weight,
+               in_dim,
+               z_dim,
+               n_genes,
+               n_cells,
+               h_dim=256,
+               k_dim=32,
+               G_rep=None,
+               g_rep_dim=None,
+               device=None
+              ):
+        &#34;&#34;&#34;
+        
+        Args:
+            edge_index (LongTensor): shape (2, ?), edge indices
+            edge_weight (FloatTensor): shape (?), edge weights.
+            in_dim (int): dimensionality of the input
+            z_dim (int): dimensionality of the low-dimensional space
+            n_genes (int): number of genes
+            n_cells (int): number of cells
+            h_dim (int): dimensionality of intermediate layers in MLP
+            k_dim (int): dimensionality of keys for attention computation
+            G_rep (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+            g_rep_dim (int): dimensionality of gene representations.
+                # Either G_rep or (n_genes, g_rep_dim) should be provided.
+                # priority is given to G_rep.
+            device (torch.device): torch device object.
+            
+        &#34;&#34;&#34;
+        super(VeloAutoencoder, self).__init__()
+        self.device = device
+        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim)
+        self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, device)
+        self.criterion = nn.MSELoss(reduction=&#39;mean&#39;)
+        
+    def forward(self, X):
+        z = self.encoder(X)
+        X_hat = self.decoder(z)
+        return self.criterion(X_hat, X)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="veloproj.model.AblationAttComb"><code class="flex name class">
+<span>class <span class="ident">AblationAttComb</span></span>
+<span>(</span><span>in_dim, z_dim, n_genes, n_cells, h_dim=256, k_dim=100, G_rep=None, g_rep_dim=None, device=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Ablation with only Attentive Combination.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>in_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the input</dd>
+<dt><strong><code>z_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the low-dimensional space</dd>
+<dt><strong><code>n_genes</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of genes</dd>
+<dt><strong><code>n_cells</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of cells</dd>
+<dt><strong><code>h_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of intermediate layers in MLP</dd>
+<dt><strong><code>k_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of keys for attention computation</dd>
+<dt><strong><code>G_rep</code></strong> :&ensp;<code>np.ndarry</code></dt>
+<dd>representation for genes, e.g. PCA over gene profiles.</dd>
+<dt><strong><code>g_rep_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of gene representations.<h1 id="either-g_rep-or-n_genes-g_rep_dim-should-be-provided">Either G_rep or (n_genes, g_rep_dim) should be provided.</h1>
+<h1 id="priority-is-given-to-g_rep">priority is given to G_rep.</h1>
+</dd>
+<dt><strong><code>device</code></strong> :&ensp;<code>torch.device</code></dt>
+<dd>torch device object.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AblationAttComb(nn.Module):
+    &#34;&#34;&#34;Ablation with only Attentive Combination.
+    
+    &#34;&#34;&#34;
+    def __init__(self,
+               in_dim,
+               z_dim,
+               n_genes,
+               n_cells,
+               h_dim=256,
+               k_dim=100,
+               G_rep=None,
+               g_rep_dim=None,
+               device=None
+              ):
+        &#34;&#34;&#34;
+        
+        Args:
+            in_dim (int): dimensionality of the input
+            z_dim (int): dimensionality of the low-dimensional space
+            n_genes (int): number of genes
+            n_cells (int): number of cells
+            h_dim (int): dimensionality of intermediate layers in MLP
+            k_dim (int): dimensionality of keys for attention computation
+            G_rep (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+            g_rep_dim (int): dimensionality of gene representations.
+                # Either G_rep or (n_genes, g_rep_dim) should be provided.
+                # priority is given to G_rep.
+            device (torch.device): torch device object.
+            
+        &#34;&#34;&#34;
+        super(AblationAttComb, self).__init__()
+        self.device = device
+        self.encoder = AblationEncoder(in_dim, z_dim, h_dim=h_dim)
+        self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, device)
+        self.criterion = nn.MSELoss(reduction=&#39;mean&#39;)
+        
+    def forward(self, X):
+        z = self.encoder(X)
+        X_hat = self.decoder(z)
+        return self.criterion(X_hat, X)    </code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="veloproj.model.AblationAttComb.dump_patches"><code class="name">var <span class="ident">dump_patches</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="veloproj.model.AblationAttComb.training"><code class="name">var <span class="ident">training</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="veloproj.model.AblationAttComb.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, X) ‑> Callable[..., Any]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the :class:<code>Module</code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, X):
+    z = self.encoder(X)
+    X_hat = self.decoder(z)
+    return self.criterion(X_hat, X)    </code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="veloproj.model.AblationCohAgg"><code class="flex name class">
+<span>class <span class="ident">AblationCohAgg</span></span>
+<span>(</span><span>edge_index, edge_weight, in_dim, z_dim, h_dim=256, device=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Ablation with only Cohort Aggregation.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>edge_index</code></strong> :&ensp;<code>LongTensor</code></dt>
+<dd>shape (2, ?), edge indices</dd>
+<dt><strong><code>edge_weight</code></strong> :&ensp;<code>FloatTensor</code></dt>
+<dd>shape (?), edge weights.</dd>
+<dt><strong><code>in_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the input</dd>
+<dt><strong><code>z_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the low-dimensional space</dd>
+<dt><strong><code>h_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of intermediate layers in MLP</dd>
+<dt><strong><code>device</code></strong> :&ensp;<code>torch.device</code></dt>
+<dd>torch device object.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AblationCohAgg(nn.Module):
+    &#34;&#34;&#34;Ablation with only Cohort Aggregation.
+    
+    &#34;&#34;&#34;
+    
+    def __init__(self,
+               edge_index,
+               edge_weight,
+               in_dim,
+               z_dim,
+               h_dim=256,
+               device=None
+              ):
+        &#34;&#34;&#34;
+        Args:
+            edge_index (LongTensor): shape (2, ?), edge indices
+            edge_weight (FloatTensor): shape (?), edge weights.
+            in_dim (int): dimensionality of the input
+            z_dim (int): dimensionality of the low-dimensional space
+            h_dim (int): dimensionality of intermediate layers in MLP
+            device (torch.device): torch device object.
+            
+        &#34;&#34;&#34;
+        super(AblationCohAgg, self).__init__()
+        self.device = device
+        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim)
+        self.decoder = AblationDecoder(z_dim, in_dim, h_dim)
+        self.criterion = nn.MSELoss(reduction=&#39;mean&#39;)
+        
+    def forward(self, X):
+        z = self.encoder(X)
+        X_hat = self.decoder(z)
+        return self.criterion(X_hat, X)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="veloproj.model.AblationCohAgg.dump_patches"><code class="name">var <span class="ident">dump_patches</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="veloproj.model.AblationCohAgg.training"><code class="name">var <span class="ident">training</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="veloproj.model.AblationCohAgg.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, X) ‑> Callable[..., Any]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the :class:<code>Module</code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, X):
+    z = self.encoder(X)
+    X_hat = self.decoder(z)
+    return self.criterion(X_hat, X)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="veloproj.model.AblationDecoder"><code class="flex name class">
+<span>class <span class="ident">AblationDecoder</span></span>
+<span>(</span><span>z_dim, out_dim, h_dim=256)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Decoder for Ablation Study.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AblationDecoder(nn.Module):
+    &#34;&#34;&#34;Decoder for Ablation Study.
+    
+    &#34;&#34;&#34;
+    def __init__(self,
+                z_dim,
+                out_dim,
+                h_dim=256
+                ):
+        super(AblationDecoder, self).__init__()
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        self.fc = nn.Sequential(
+            nn.Linear(z_dim, out_dim),
+        )
+        
+    def forward(self, Z):
+        return self.fc(Z)   </code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="veloproj.model.AblationDecoder.dump_patches"><code class="name">var <span class="ident">dump_patches</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="veloproj.model.AblationDecoder.training"><code class="name">var <span class="ident">training</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="veloproj.model.AblationDecoder.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, Z) ‑> Callable[..., Any]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the :class:<code>Module</code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, Z):
+    return self.fc(Z)   </code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="veloproj.model.AblationEncoder"><code class="flex name class">
+<span>class <span class="ident">AblationEncoder</span></span>
+<span>(</span><span>in_dim, z_dim, h_dim=256)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Encoder for Ablation Study</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AblationEncoder(nn.Module):
+    &#34;&#34;&#34;Encoder for Ablation Study
+    
+    &#34;&#34;&#34;
+    def __init__(self, 
+                 in_dim, 
+                 z_dim,
+                 h_dim=256
+                ):
+        super(AblationEncoder, self).__init__()
+        self.fn = nn.Sequential(
+            nn.Linear(in_dim, h_dim, bias=True),
+            nn.GELU(),
+            nn.Linear(h_dim, z_dim, bias=True),
+            nn.GELU(),
+        )
+                
+    def forward(self, x):
+        z = self.fn(x)
+        return z    </code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="veloproj.model.AblationEncoder.dump_patches"><code class="name">var <span class="ident">dump_patches</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="veloproj.model.AblationEncoder.training"><code class="name">var <span class="ident">training</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="veloproj.model.AblationEncoder.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, x) ‑> Callable[..., Any]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the :class:<code>Module</code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, x):
+    z = self.fn(x)
+    return z    </code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="veloproj.model.Attention"><code class="flex name class">
+<span>class <span class="ident">Attention</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compute 'Scaled Dot Product Attention'.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Attention(nn.Module):
+    &#34;&#34;&#34;Compute &#39;Scaled Dot Product Attention&#39;.
+    
+    &#34;&#34;&#34;
+    def __init__(self):
+        super(Attention, self).__init__()
+    
+    def forward(self, query, key, value):
+        &#34;&#34;&#34;
+        Args:
+            query (torch.FloatTensor): query vectors identifying the gene profiles to be reconstructed.
+            key (torch.FloatTensor): key vectors identifying the latent profiles to be attended to.
+            value (torch.FloatTensor): Z
+            
+        Returns:
+            FloatTensor: shape (n_genes, n_cells), reconstructed input
+            FloatTensor: shape (n_genes, z_dim), gene by attention distribution matrix
+        &#34;&#34;&#34;
+        
+        d_k = query.size(-1)
+        scores = torch.matmul(query, key.transpose(-2, -1)) / np.sqrt(d_k)
+        p_attn = torch.softmax(scores, dim=-1)
+        return torch.matmul(p_attn, value), p_attn</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="veloproj.model.Attention.dump_patches"><code class="name">var <span class="ident">dump_patches</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="veloproj.model.Attention.training"><code class="name">var <span class="ident">training</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="veloproj.model.Attention.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, query, key, value) ‑> Callable[..., Any]</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>query</code></strong> :&ensp;<code>torch.FloatTensor</code></dt>
+<dd>query vectors identifying the gene profiles to be reconstructed.</dd>
+<dt><strong><code>key</code></strong> :&ensp;<code>torch.FloatTensor</code></dt>
+<dd>key vectors identifying the latent profiles to be attended to.</dd>
+<dt><strong><code>value</code></strong> :&ensp;<code>torch.FloatTensor</code></dt>
+<dd>Z</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>FloatTensor</code></dt>
+<dd>shape (n_genes, n_cells), reconstructed input</dd>
+<dt><code>FloatTensor</code></dt>
+<dd>shape (n_genes, z_dim), gene by attention distribution matrix</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, query, key, value):
+    &#34;&#34;&#34;
+    Args:
+        query (torch.FloatTensor): query vectors identifying the gene profiles to be reconstructed.
+        key (torch.FloatTensor): key vectors identifying the latent profiles to be attended to.
+        value (torch.FloatTensor): Z
+        
+    Returns:
+        FloatTensor: shape (n_genes, n_cells), reconstructed input
+        FloatTensor: shape (n_genes, z_dim), gene by attention distribution matrix
+    &#34;&#34;&#34;
+    
+    d_k = query.size(-1)
+    scores = torch.matmul(query, key.transpose(-2, -1)) / np.sqrt(d_k)
+    p_attn = torch.softmax(scores, dim=-1)
+    return torch.matmul(p_attn, value), p_attn</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="veloproj.model.Decoder"><code class="flex name class">
+<span>class <span class="ident">Decoder</span></span>
+<span>(</span><span>z_col_dim, G_rep=None, n_genes=None, g_rep_dim=None, k_dim=32, h_dim=256, device=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Decoder</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>z_col_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>size of column vectors in Z.</dd>
+<dt><strong><code>G_rep</code></strong> :&ensp;<code>np.ndarry</code></dt>
+<dd>representation for genes, e.g. PCA over gene profiles.</dd>
+<dt><strong><code>n_genes</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of genes.</dd>
+<dt><strong><code>g_rep_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of gene representations.<h1 id="either-g_rep-or-n_genes-g_rep_dim-should-be-provided">Either G_rep or (n_genes, g_rep_dim) should be provided.</h1>
+<h1 id="priority-is-given-to-g_rep">priority is given to G_rep.</h1>
+</dd>
+<dt><strong><code>k_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of keys for attention computation.</dd>
+<dt><strong><code>h_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of intermediate layers of MLP.</dd>
+<dt><strong><code>device</code></strong> :&ensp;<code>torch.device</code></dt>
+<dd>torch device object.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Decoder(nn.Module):
+    &#34;&#34;&#34;Decoder
+    
+    &#34;&#34;&#34;
+    def __init__(self,
+                z_col_dim,
+                G_rep=None,
+                n_genes=None,
+                g_rep_dim=None,
+                k_dim=32,
+                h_dim=256,
+                device=None,
+                ):
+        &#34;&#34;&#34;
+        Args:
+            z_col_dim (int): size of column vectors in Z.
+            G_rep (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+            n_genes (int): number of genes.
+            g_rep_dim (int): dimensionality of gene representations.
+                # Either G_rep or (n_genes, g_rep_dim) should be provided.
+                # priority is given to G_rep.
+            k_dim (int): dimensionality of keys for attention computation.
+            h_dim (int): dimensionality of intermediate layers of MLP.
+            device (torch.device): torch device object.
+            
+        &#34;&#34;&#34;
+        super(Decoder, self).__init__()
+        self.device = device
+        if not G_rep is None:
+            g_rep_dim = G_rep.shape[-1]
+        self.key_Z = nn.Sequential(
+            nn.Linear(z_col_dim, h_dim),
+            nn.GELU(),
+            nn.Linear(h_dim, k_dim)
+        )
+        self.key_G = nn.Sequential(
+            nn.Linear(g_rep_dim, k_dim),
+            nn.GELU(),
+            nn.Linear(k_dim, k_dim)
+        )
+        self.G_rep = self._init_G_emb(n_genes, g_rep_dim) if G_rep is None else torch.FloatTensor(G_rep).to(device)
+        self.attn = Attention()
+        
+    def _init_G_emb(self, n_genes, rep_dim):
+        embedder = torch.empty(n_genes, rep_dim)
+        nn.init.xavier_normal_(embedder)
+        return nn.Parameter(embedder).to(self.device)
+        
+    def forward(self, Z, return_attn=False):
+        Z = Z.T
+        key = self.key_Z(Z)
+        query = self.key_G(self.G_rep)
+        X_hat_means, p_attn = self.attn(query, key, Z)
+        if return_attn:
+            return X_hat_means.T, p_attn.T
+        return X_hat_means.T</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="veloproj.model.Decoder.dump_patches"><code class="name">var <span class="ident">dump_patches</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="veloproj.model.Decoder.training"><code class="name">var <span class="ident">training</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="veloproj.model.Decoder.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, Z, return_attn=False) ‑> Callable[..., Any]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the :class:<code>Module</code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, Z, return_attn=False):
+    Z = Z.T
+    key = self.key_Z(Z)
+    query = self.key_G(self.G_rep)
+    X_hat_means, p_attn = self.attn(query, key, Z)
+    if return_attn:
+        return X_hat_means.T, p_attn.T
+    return X_hat_means.T</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="veloproj.model.Encoder"><code class="flex name class">
+<span>class <span class="ident">Encoder</span></span>
+<span>(</span><span>in_dim, z_dim, edge_index, edge_weight, h_dim=256)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Encoder</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>in_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the input</dd>
+<dt><strong><code>z_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the low-dimensional space</dd>
+<dt><strong><code>edge_index</code></strong> :&ensp;<code>LongTensor</code></dt>
+<dd>shape (2, ?), edge indices</dd>
+<dt><strong><code>edge_weight</code></strong> :&ensp;<code>FloatTensor</code></dt>
+<dd>shape (?), edge weights.</dd>
+<dt><strong><code>h_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of intermediate layers in MLP</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Encoder(nn.Module):
+    &#34;&#34;&#34;Encoder
+    
+    &#34;&#34;&#34;
+    def __init__(self, 
+                 in_dim, 
+                 z_dim,
+                 edge_index,
+                 edge_weight,
+                 h_dim=256
+                ):
+        &#34;&#34;&#34;
+        Args:
+            in_dim (int): dimensionality of the input
+            z_dim (int): dimensionality of the low-dimensional space
+            edge_index (LongTensor): shape (2, ?), edge indices
+            edge_weight (FloatTensor): shape (?), edge weights.
+            h_dim (int): dimensionality of intermediate layers in MLP
+            
+        &#34;&#34;&#34;
+        super(Encoder, self).__init__()
+        self.edge_index = edge_index
+        self.edge_weight = edge_weight
+        self.fn = nn.Sequential(
+            nn.Linear(in_dim, h_dim, bias=True),
+            nn.GELU(),
+            nn.Linear(h_dim, z_dim, bias=True),
+            nn.GELU(),
+        )
+        self.gcn1 = GCNConv(z_dim, z_dim, cached=False, add_self_loops=True)
+        self.gcn2 = GCNConv(z_dim, z_dim, cached=False, add_self_loops=True)
+        
+    def forward(self, x):
+        z = self.fn(x)
+        z = self.gcn1(z, edge_index=self.edge_index, edge_weight=self.edge_weight)
+        z = self.gcn2(z, edge_index=self.edge_index, edge_weight=self.edge_weight)
+        return z</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="veloproj.model.Encoder.dump_patches"><code class="name">var <span class="ident">dump_patches</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="veloproj.model.Encoder.training"><code class="name">var <span class="ident">training</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="veloproj.model.Encoder.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, x) ‑> Callable[..., Any]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the :class:<code>Module</code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, x):
+    z = self.fn(x)
+    z = self.gcn1(z, edge_index=self.edge_index, edge_weight=self.edge_weight)
+    z = self.gcn2(z, edge_index=self.edge_index, edge_weight=self.edge_weight)
+    return z</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="veloproj.model.VeloAutoencoder"><code class="flex name class">
+<span>class <span class="ident">VeloAutoencoder</span></span>
+<span>(</span><span>edge_index, edge_weight, in_dim, z_dim, n_genes, n_cells, h_dim=256, k_dim=32, G_rep=None, g_rep_dim=None, device=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Proposed VeloAutoencoder with both mechanisms.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>edge_index</code></strong> :&ensp;<code>LongTensor</code></dt>
+<dd>shape (2, ?), edge indices</dd>
+<dt><strong><code>edge_weight</code></strong> :&ensp;<code>FloatTensor</code></dt>
+<dd>shape (?), edge weights.</dd>
+<dt><strong><code>in_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the input</dd>
+<dt><strong><code>z_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the low-dimensional space</dd>
+<dt><strong><code>n_genes</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of genes</dd>
+<dt><strong><code>n_cells</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of cells</dd>
+<dt><strong><code>h_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of intermediate layers in MLP</dd>
+<dt><strong><code>k_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of keys for attention computation</dd>
+<dt><strong><code>G_rep</code></strong> :&ensp;<code>np.ndarry</code></dt>
+<dd>representation for genes, e.g. PCA over gene profiles.</dd>
+<dt><strong><code>g_rep_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of gene representations.<h1 id="either-g_rep-or-n_genes-g_rep_dim-should-be-provided">Either G_rep or (n_genes, g_rep_dim) should be provided.</h1>
+<h1 id="priority-is-given-to-g_rep">priority is given to G_rep.</h1>
+</dd>
+<dt><strong><code>device</code></strong> :&ensp;<code>torch.device</code></dt>
+<dd>torch device object.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class VeloAutoencoder(nn.Module):
+    &#34;&#34;&#34;Proposed VeloAutoencoder with both mechanisms.
+        
+    &#34;&#34;&#34;
+    
+    def __init__(self,
+               edge_index,
+               edge_weight,
+               in_dim,
+               z_dim,
+               n_genes,
+               n_cells,
+               h_dim=256,
+               k_dim=32,
+               G_rep=None,
+               g_rep_dim=None,
+               device=None
+              ):
+        &#34;&#34;&#34;
+        
+        Args:
+            edge_index (LongTensor): shape (2, ?), edge indices
+            edge_weight (FloatTensor): shape (?), edge weights.
+            in_dim (int): dimensionality of the input
+            z_dim (int): dimensionality of the low-dimensional space
+            n_genes (int): number of genes
+            n_cells (int): number of cells
+            h_dim (int): dimensionality of intermediate layers in MLP
+            k_dim (int): dimensionality of keys for attention computation
+            G_rep (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+            g_rep_dim (int): dimensionality of gene representations.
+                # Either G_rep or (n_genes, g_rep_dim) should be provided.
+                # priority is given to G_rep.
+            device (torch.device): torch device object.
+            
+        &#34;&#34;&#34;
+        super(VeloAutoencoder, self).__init__()
+        self.device = device
+        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim)
+        self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, device)
+        self.criterion = nn.MSELoss(reduction=&#39;mean&#39;)
+        
+    def forward(self, X):
+        z = self.encoder(X)
+        X_hat = self.decoder(z)
+        return self.criterion(X_hat, X)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>torch.nn.modules.module.Module</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="veloproj.model.VeloAutoencoder.dump_patches"><code class="name">var <span class="ident">dump_patches</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="veloproj.model.VeloAutoencoder.training"><code class="name">var <span class="ident">training</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="veloproj.model.VeloAutoencoder.forward"><code class="name flex">
+<span>def <span class="ident">forward</span></span>(<span>self, X) ‑> Callable[..., Any]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the :class:<code>Module</code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def forward(self, X):
+    z = self.encoder(X)
+    X_hat = self.decoder(z)
+    return self.criterion(X_hat, X)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="veloproj" href="index.html">veloproj</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="veloproj.model.AblationAttComb" href="#veloproj.model.AblationAttComb">AblationAttComb</a></code></h4>
+<ul class="">
+<li><code><a title="veloproj.model.AblationAttComb.dump_patches" href="#veloproj.model.AblationAttComb.dump_patches">dump_patches</a></code></li>
+<li><code><a title="veloproj.model.AblationAttComb.forward" href="#veloproj.model.AblationAttComb.forward">forward</a></code></li>
+<li><code><a title="veloproj.model.AblationAttComb.training" href="#veloproj.model.AblationAttComb.training">training</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="veloproj.model.AblationCohAgg" href="#veloproj.model.AblationCohAgg">AblationCohAgg</a></code></h4>
+<ul class="">
+<li><code><a title="veloproj.model.AblationCohAgg.dump_patches" href="#veloproj.model.AblationCohAgg.dump_patches">dump_patches</a></code></li>
+<li><code><a title="veloproj.model.AblationCohAgg.forward" href="#veloproj.model.AblationCohAgg.forward">forward</a></code></li>
+<li><code><a title="veloproj.model.AblationCohAgg.training" href="#veloproj.model.AblationCohAgg.training">training</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="veloproj.model.AblationDecoder" href="#veloproj.model.AblationDecoder">AblationDecoder</a></code></h4>
+<ul class="">
+<li><code><a title="veloproj.model.AblationDecoder.dump_patches" href="#veloproj.model.AblationDecoder.dump_patches">dump_patches</a></code></li>
+<li><code><a title="veloproj.model.AblationDecoder.forward" href="#veloproj.model.AblationDecoder.forward">forward</a></code></li>
+<li><code><a title="veloproj.model.AblationDecoder.training" href="#veloproj.model.AblationDecoder.training">training</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="veloproj.model.AblationEncoder" href="#veloproj.model.AblationEncoder">AblationEncoder</a></code></h4>
+<ul class="">
+<li><code><a title="veloproj.model.AblationEncoder.dump_patches" href="#veloproj.model.AblationEncoder.dump_patches">dump_patches</a></code></li>
+<li><code><a title="veloproj.model.AblationEncoder.forward" href="#veloproj.model.AblationEncoder.forward">forward</a></code></li>
+<li><code><a title="veloproj.model.AblationEncoder.training" href="#veloproj.model.AblationEncoder.training">training</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="veloproj.model.Attention" href="#veloproj.model.Attention">Attention</a></code></h4>
+<ul class="">
+<li><code><a title="veloproj.model.Attention.dump_patches" href="#veloproj.model.Attention.dump_patches">dump_patches</a></code></li>
+<li><code><a title="veloproj.model.Attention.forward" href="#veloproj.model.Attention.forward">forward</a></code></li>
+<li><code><a title="veloproj.model.Attention.training" href="#veloproj.model.Attention.training">training</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="veloproj.model.Decoder" href="#veloproj.model.Decoder">Decoder</a></code></h4>
+<ul class="">
+<li><code><a title="veloproj.model.Decoder.dump_patches" href="#veloproj.model.Decoder.dump_patches">dump_patches</a></code></li>
+<li><code><a title="veloproj.model.Decoder.forward" href="#veloproj.model.Decoder.forward">forward</a></code></li>
+<li><code><a title="veloproj.model.Decoder.training" href="#veloproj.model.Decoder.training">training</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="veloproj.model.Encoder" href="#veloproj.model.Encoder">Encoder</a></code></h4>
+<ul class="">
+<li><code><a title="veloproj.model.Encoder.dump_patches" href="#veloproj.model.Encoder.dump_patches">dump_patches</a></code></li>
+<li><code><a title="veloproj.model.Encoder.forward" href="#veloproj.model.Encoder.forward">forward</a></code></li>
+<li><code><a title="veloproj.model.Encoder.training" href="#veloproj.model.Encoder.training">training</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="veloproj.model.VeloAutoencoder" href="#veloproj.model.VeloAutoencoder">VeloAutoencoder</a></code></h4>
+<ul class="">
+<li><code><a title="veloproj.model.VeloAutoencoder.dump_patches" href="#veloproj.model.VeloAutoencoder.dump_patches">dump_patches</a></code></li>
+<li><code><a title="veloproj.model.VeloAutoencoder.forward" href="#veloproj.model.VeloAutoencoder.forward">forward</a></code></li>
+<li><code><a title="veloproj.model.VeloAutoencoder.training" href="#veloproj.model.VeloAutoencoder.training">training</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

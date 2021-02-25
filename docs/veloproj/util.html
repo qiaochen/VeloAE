@@ -1,0 +1,1289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>veloproj.util API documentation</title>
+<meta name="description" content="Utility function module …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>veloproj.util</code></h1>
+</header>
+<section id="section-intro">
+<p>Utility function module.</p>
+<p>This module contains util functions.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python"># -*- coding: utf-8 -*-
+&#34;&#34;&#34;Utility function module.
+
+This module contains util functions.
+
+&#34;&#34;&#34;
+import torch
+import numpy as np
+import os, sys
+import anndata
+import scvelo as scv
+import scanpy as sc
+import argparse
+
+from matplotlib import pyplot as plt
+
+
+def get_parser():
+    &#34;&#34;&#34;Get the argument parser
+    
+    Returns:
+        Parser object.
+        
+    &#34;&#34;&#34;
+    parser = argparse.ArgumentParser(description=&#39;VeloAutoencoder Experiment settings&#39;)
+    parser.add_argument(&#39;--data-dir&#39;, type=str, default=None, metavar=&#39;PATH&#39;,
+                        help=&#39;default directory to adata file&#39;)
+    parser.add_argument(&#39;--model-name&#39;, type=str, default=&#34;tmp_model.cpt&#34;, metavar=&#39;PATH&#39;,
+                        help=&#34;&#34;&#34;save the trained model with this name in training, or 
+                                read the model for velocity projection if the model has
+                                already been trained.
+                             &#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--exp-name&#39;, type=str, default=&#34;experiment&#34;, metavar=&#39;PATH&#39;,
+                        help=&#39;name of the experiment&#39;)
+    parser.add_argument(&#39;--adata&#39;, type=str, metavar=&#39;PATH&#39;, 
+                        help=&#34;&#34;&#34;path to the Anndata file with transcriptom, spliced and unspliced
+                                mRNA expressions, the adata should be already preprocessed and with
+                                velocity estimated in the original space.&#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--use_x&#39;, type=bool, default=True,
+                        help=&#34;&#34;&#34;whether or not to enroll transcriptom reads for training 
+                                (default: True).&#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--use_s&#39;, type=bool, default=True,
+                        help=&#34;&#34;&#34;whether or not to enroll spliced mRNA reads for training 
+                                (default: True).&#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--use_u&#39;, type=bool, default=True,
+                        help=&#34;&#34;&#34;whether or not to enroll unspliced mRNA reads for training 
+                                (default: True).&#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--refit&#39;, type=int, default=1,
+                        help=&#34;&#34;&#34;whether or not refitting veloAE, if False, need to provide
+                                a fitted model for velocity projection. (default=1)
+                             &#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--output&#39;, type=str, default=&#34;./&#34;,
+                        help=&#34;Path to output directory (default: ./)&#34;
+                       )
+    parser.add_argument(&#39;--vis-key&#39;, type=str, default=&#34;X_umap&#34;,
+                        help=&#34;Key to visualization embeddings in adata.obsm (default: X_umap)&#34;
+                       )
+    parser.add_argument(&#39;--z-dim&#39;, type=int, default=100,
+                        help=&#39;dimentionality of the hidden representation Z (default: 100)&#39;)
+    parser.add_argument(&#39;--g-rep-dim&#39;, type=int, default=100,
+                        help=&#39;dimentionality of gene representation (default: 256)&#39;)
+    parser.add_argument(&#39;--h-dim&#39;, type=int, default=256,
+                        help=&#39;dimentionality of intermedeate layers of MLP (default: 256)&#39;)
+    parser.add_argument(&#39;--k-dim&#39;, type=int, default=50,
+                        help=&#39;dimentionality of attention keys/queries (default: 50)&#39;)
+    parser.add_argument(&#39;--conv-thred&#39;, type=float, default=1e-6,
+                        help=&#39;convergence threshold of early-stopping (default: 1e-6)&#39;)
+    parser.add_argument(&#39;--n-epochs&#39;, type=int, default=20000, metavar=&#39;N&#39;,
+                        help=&#39;number of epochs to train (default: 20000)&#39;)
+    parser.add_argument(&#39;--lr&#39;, type=float, default=1e-5,
+                        help=&#39;learning rate (default: 1e-5)&#39;)
+    parser.add_argument(&#39;--weight-decay&#39;, type=float, default=0.0,
+                        help=&#39;weight decay strength (default 0.0)&#39;)
+    parser.add_argument(&#39;--seed&#39;, type=int, default=42, metavar=&#39;S&#39;,
+                        help=&#39;random seed (default: 42)&#39;)
+    parser.add_argument(&#39;--log-interval&#39;, type=int, default=100,
+                        help=&#39;how frequntly logging training status (default: 100)&#39;)
+    parser.add_argument(&#39;--device&#39;, type=str, default=&#34;cpu&#34;,
+                        help=&#39;specify device: e.g., cuda:0, cpu (default: cpu)&#39;)
+    return parser
+
+
+def init_model(adata, args, device):
+    &#34;&#34;&#34;Initialize a model
+    
+    Args:
+        adata (Anndata): Anndata object.
+        args (ArgumentParser): ArgumentParser instance.
+        device (torch.device): device instance
+        
+    Returns:
+        nn.Module: model instance
+    &#34;&#34;&#34;
+    from sklearn.decomposition import PCA
+    n_cells, n_genes = adata.X.shape
+    G_embeddings = PCA(n_components=args.g_rep_dim).fit_transform(adata.X.T.toarray())
+    model = get_veloAE(
+                     adata, 
+                     args.z_dim, 
+                     n_genes, 
+                     n_cells, 
+                     args.h_dim, 
+                     args.k_dim, 
+                     G_embeddings=G_embeddings, 
+                     g_rep_dim=args.g_rep_dim,
+                     device=device
+                    )
+    return model
+
+
+def fit_model(args, adata, model, inputs):
+    &#34;&#34;&#34;Fit a velo autoencoder
+    
+    Args:
+        args (ArgumentParser): ArgumentParser object
+        adata (Anndata): Anndata object
+        model (nn.Module): VeloAE instance
+        inputs (list of tensors): inputs for training VeloAE, e.g., [x, s, u]
+    
+    Returns:
+        nn.Module: Fitted model.
+    &#34;&#34;&#34;
+    optimizer = torch.optim.AdamW(model.parameters(), 
+                                  lr=args.lr, 
+                                  weight_decay=args.weight_decay)
+    
+    model.train()
+    i, losses = 0, [sys.maxsize]
+    while i &lt; args.n_epochs:
+        i += 1
+        loss = train_step_AE(inputs, model, optimizer)                
+        losses.append(loss)
+        if i % args.log_interval == 0:
+            print(&#34;Train Epoch: {:2d}/{:2d} \tLoss: {:.6f}&#34;
+                  .format(i, args.n_epochs, losses[-1]))
+
+    plt.plot(losses[1:])
+    plt.savefig(os.path.join(args.output, &#34;training_loss.png&#34;))
+    torch.save(model.state_dict(), os.path.join(args.output, args.model_name))
+    return model
+
+def do_projection(model, 
+                  adata,
+                  args,
+                  tensor_x, 
+                  tensor_s, 
+                  tensor_u, 
+                  tensor_v
+                 ):
+    &#34;&#34;&#34;Project everything into the low-dimensional space
+    
+    Args:
+        model (nn.Module): trained Model instance.
+        adata (Anndata): Anndata instance in the raw dimension.
+        args (ArgumentParser): ArgumentParser instance.
+        tensor_x (FloatTensor): transcriptom expressions.
+        tensor_s (FloatTensor): spliced mRNA expressions.
+        tensor_u (FloatTensor): unspliced mRNA expressions.
+        tensor_v (FloatTensor): Velocity in the raw dimensional space.
+        
+    Returns:
+        Anndata: Anndata object in the latent space.
+    
+    &#34;&#34;&#34;
+    x = model.encoder(tensor_x).detach().cpu().numpy()
+    s = model.encoder(tensor_s).detach().cpu().numpy()
+    u = model.encoder(tensor_u).detach().cpu().numpy()
+    v = model.encoder(tensor_s + tensor_v).detach().cpu().numpy() - s
+    
+    new_adata = anndata.AnnData(x)
+    new_adata.layers[&#39;spliced&#39;] = s
+    new_adata.layers[&#39;unspliced&#39;] = u
+    new_adata.layers[&#39;velocity&#39;] = v
+    new_adata.obs.index = adata.obs.index.copy()
+    
+    for key in adata.obs:
+        new_adata.obs[key] = adata.obs[key].copy()
+    for key in adata.obsm:
+        new_adata.obsm[key] = adata.obsm[key].copy()
+    for key in adata.obsp:
+        new_adata.obsp[key] = adata.obsp[key].copy()
+    for clr in [key for key in adata.uns if key.split(&#34;_&#34;)[-1] == &#39;colors&#39; ]:
+        new_adata.uns[clr] = adata.uns[clr]
+    
+    scv.pp.moments(new_adata, n_pcs=30, n_neighbors=30)
+    scv.tl.velocity_graph(new_adata, vkey=&#39;velocity&#39;)
+    scv.pl.velocity_embedding_stream(new_adata, vkey=&#34;velocity&#34;, basis=args.vis_key,
+                                    title=&#34;Project Original Velocity into Low-Dim Space&#34;,
+                                    save=&#39;un_colored_velo_projection.png&#39;
+                                    )
+    return new_adata
+
+
+def init_adata(args):
+    &#34;&#34;&#34;Initialize Anndata object
+    
+    Args:
+        args (ArgumentParser): ArgumentParser instance
+        
+    Returns:
+        Anndata: preprocessed Anndata instance
+    &#34;&#34;&#34;
+    adata = sc.read(args.adata)
+    scv.utils.show_proportions(adata)
+    scv.pp.filter_and_normalize(adata, min_shared_counts=30, n_top_genes=2000)
+    scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
+    scv.tl.velocity(adata, vkey=&#39;stc_velocity&#39;, mode=&#34;stochastic&#34;)
+    return adata
+
+    
+def new_adata(adata, x, s, u, v=None, 
+              copy_moments=True, 
+              new_v_key=&#34;new_velocity&#34;, 
+              X_emb_key=&#34;X_umap&#34;):
+    &#34;&#34;&#34;Copy a new Anndata object while keeping some original information.
+    
+    Args:
+        adata (Anndata): Anndata object
+        x (np.ndarray): new transcriptome.
+        s (np.ndarray): new spliced mRNA expression.
+        u (np.ndarray): new unspliced mRNA expression.
+        v (np.ndarray): new velocity.
+        copy_moments (bool): whether to copy the moments.
+        X_emb_key (str): key string of the embedding of X for visualization.
+    
+    Returns:
+        Anndata: a new Anndata object
+    
+    &#34;&#34;&#34;
+    new_adata = anndata.AnnData(x)
+    new_adata.layers[&#39;spliced&#39;] = s
+    new_adata.layers[&#39;unspliced&#39;] = u
+    if not v is None:
+        new_adata.layers[new_v_key] = v
+        
+    new_adata.obs.index = adata.obs.index.copy()
+    
+    for key in adata.obs:
+        new_adata.obs[key] = adata.obs[key].copy()
+        
+    new_adata.obsm[&#39;X_pca&#39;] = adata.obsm[&#39;X_pca&#39;].copy()
+    new_adata.obsp[&#39;distances&#39;] = adata.obsp[&#39;distances&#39;].copy()
+    new_adata.obsp[&#39;connectivities&#39;] = adata.obsp[&#39;connectivities&#39;].copy()
+    
+    if copy_moments:
+        new_adata.layers[&#39;Ms&#39;] = adata.layers[&#39;Ms&#39;].copy()
+        new_adata.layers[&#39;Mu&#39;] = adata.layers[&#39;Mu&#39;].copy()
+        
+    for clr in [key for key in adata.uns if key.split(&#34;_&#34;)[-1] == &#39;colors&#39; ]:
+        new_adata.uns[clr] = adata.uns[clr]
+        
+    new_adata.uns[&#39;neighbors&#39;] = adata.uns[&#39;neighbors&#39;].copy()
+    new_adata.obsm[X_emb_key] = adata.obsm[X_emb_key].copy()
+    return new_adata
+
+
+def train_step_AE(Xs, model, optimizer):
+    &#34;&#34;&#34;Conduct a train step.
+    
+    Args:
+        Xs (list[FloatTensor]): inputs for Autoencoder
+        model (nn.Module): Instance of Autoencoder class
+        optimizer (nn.optim.Optimizer): instance of pytorch Optimizer class
+    
+    Returns:
+        float: loss of this step.
+        
+    &#34;&#34;&#34;
+    optimizer.zero_grad()
+    loss = 0
+    for X in Xs:
+        loss += model(X)
+    loss.backward()
+    optimizer.step()
+    return loss.item()
+
+
+def sklearn_decompose(method, X, S, U, V):
+    &#34;&#34;&#34;General interface using sklearn.decomposition.XXX method
+    
+    Args:
+        method (sklearn.decomposition class): e.g., instance of sklearn.decomposition.PCA
+        X (np.ndarray): High-dimensional transcriptom.
+        S (np.ndarray): High-dimensional spliced mRNA expression.
+        U (np.ndarray): High-dimensional unspliced mRNA expression.
+        V (np.ndarray): High-dimensional cell velocity estimation.
+        
+    Returns:
+        np.ndarray: decomposed low-dimensional representations for X, S, U and V
+    
+    &#34;&#34;&#34;
+    n_cells = X.shape[0]
+    X_orig = np.concatenate([
+                    X, 
+                    S, 
+                    U
+                   ], axis=0)
+    
+    method.fit(X_orig)
+    x = method.transform(X)
+    s = method.transform(S)
+    u = method.transform(U)
+    v = method.transform(S + V) - s
+    return x, s, u, v
+    
+    
+def get_baseline_AE(in_dim, z_dim, h_dim):
+    &#34;&#34;&#34;Instantiate a Baseline Autoencoder.
+    
+    Args:
+        in_dim (int): dimensionality of input.
+        z_dim (int): dimensionality of low-dimensional space.
+        h_dim (int): dimensionality of intermediate layers in MLP.
+            
+    Returns:
+        nn.Module: AE instance
+    
+    
+    &#34;&#34;&#34;    
+    from .baseline import AutoEncoder
+    model = AutoEncoder(
+                in_dim,
+                z_dim,
+                h_dim
+                )
+    return model
+
+
+def get_ablation_CohAgg(
+                edge_index,
+                edge_weight,
+                in_dim,
+                z_dim,
+                h_dim,
+                device):
+    &#34;&#34;&#34;Get Ablation Cohort Aggregation instance
+    
+    Args:
+        edge_index (LongTensor): shape (2, ?), edge indices
+        edge_weight (FloatTensor): shape (?), edge weights.
+        in_dim (int): dimensionality of the input
+        z_dim (int): dimensionality of the low-dimensional space
+        h_dim (int): dimensionality of intermediate layers in MLP
+        device (torch.device): torch device object.
+
+    Returns:
+        nn.Module: model instance
+    &#34;&#34;&#34;
+    from .model import AblationCohAgg
+    model = AblationCohAgg(
+        edge_index,
+        edge_weight,
+        in_dim,
+        z_dim,
+        h_dim,
+        device
+    )
+    return model.to(device)
+
+
+def get_ablation_attcomb(
+                        z_dim,
+                        n_genes,
+                        n_cells,
+                        h_dim,
+                        k_dim,
+                        G_rep,
+                        g_rep_dim,
+                        device):
+    &#34;&#34;&#34;Instantiate an AttenComb configuration for ablation study.
+    
+    Args:
+        z_dim (int): dimensionality of the low-dimensional space
+        n_genes (int): number of genes
+        n_cells (int): number of cells
+        h_dim (int): dimensionality of intermediate layers in MLP
+        k_dim (int): dimensionality of keys for attention computation
+        G_rep (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+        g_rep_dim (int): dimensionality of gene representations.
+            # Either G_rep or (n_genes, g_rep_dim) should be provided.
+            # priority is given to G_rep.
+        device (torch.device): torch device object.
+    
+    Returns:
+        nn.Module: model instance
+    &#34;&#34;&#34;
+    from .model import AblationAttComb
+    model = AblationAttComb(
+        n_genes,
+        z_dim,
+        n_genes,
+        n_cells,
+        h_dim,
+        k_dim,
+        G_rep,
+        g_rep_dim,
+        device
+    )
+    return model.to(device)
+
+
+def get_veloAE(
+             adata, 
+             z_dim, 
+             n_genes, 
+             n_cells, 
+             h_dim, 
+             k_dim, 
+             G_embeddings=None, 
+             g_rep_dim=100,
+             device=None):
+    &#34;&#34;&#34;Instantiate a VeloAE object.
+    
+    Args:
+        adata (Anndata): Anndata object
+        z_dim (int): dimensionality of the low-dimensional space
+        n_genes (int): number of genes
+        n_cells (int): number of cells
+        h_dim (int): dimensionality of intermediate layers in MLP
+        k_dim (int): dimensionality of keys for attention computation
+        G_embeddings (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+        g_rep_dim (int): dimensionality of gene representations.
+            # Either G_rep or (n_genes, g_rep_dim) should be provided.
+            # priority is given to G_rep.
+        device (torch.device): torch device object.
+    
+    Returns:
+        nn.Module: model instance
+    &#34;&#34;&#34;
+    from .model import VeloAutoencoder
+    conn = adata.obsp[&#39;connectivities&#39;]
+    nb_indices = adata.uns[&#39;neighbors&#39;][&#39;indices&#39;]
+    xs, ys = np.repeat(range(n_cells), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
+    edge_weight = torch.FloatTensor(conn[xs,ys]).view(-1).to(device)
+    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), xs.reshape(1, -1)])).to(device)
+    model = VeloAutoencoder(
+                edge_index,
+                edge_weight,
+                n_genes,
+                z_dim,
+                n_genes,
+                n_cells,
+                h_dim=h_dim,
+                k_dim=k_dim,
+                G_rep=G_embeddings,
+                g_rep_dim=g_rep_dim,
+                device=device
+                )
+    return model.to(device)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="veloproj.util.do_projection"><code class="name flex">
+<span>def <span class="ident">do_projection</span></span>(<span>model, adata, args, tensor_x, tensor_s, tensor_u, tensor_v)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Project everything into the low-dimensional space</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>model</code></strong> :&ensp;<code>nn.Module</code></dt>
+<dd>trained Model instance.</dd>
+<dt><strong><code>adata</code></strong> :&ensp;<code>Anndata</code></dt>
+<dd>Anndata instance in the raw dimension.</dd>
+<dt><strong><code>args</code></strong> :&ensp;<code>ArgumentParser</code></dt>
+<dd>ArgumentParser instance.</dd>
+<dt><strong><code>tensor_x</code></strong> :&ensp;<code>FloatTensor</code></dt>
+<dd>transcriptom expressions.</dd>
+<dt><strong><code>tensor_s</code></strong> :&ensp;<code>FloatTensor</code></dt>
+<dd>spliced mRNA expressions.</dd>
+<dt><strong><code>tensor_u</code></strong> :&ensp;<code>FloatTensor</code></dt>
+<dd>unspliced mRNA expressions.</dd>
+<dt><strong><code>tensor_v</code></strong> :&ensp;<code>FloatTensor</code></dt>
+<dd>Velocity in the raw dimensional space.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Anndata</code></dt>
+<dd>Anndata object in the latent space.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def do_projection(model, 
+                  adata,
+                  args,
+                  tensor_x, 
+                  tensor_s, 
+                  tensor_u, 
+                  tensor_v
+                 ):
+    &#34;&#34;&#34;Project everything into the low-dimensional space
+    
+    Args:
+        model (nn.Module): trained Model instance.
+        adata (Anndata): Anndata instance in the raw dimension.
+        args (ArgumentParser): ArgumentParser instance.
+        tensor_x (FloatTensor): transcriptom expressions.
+        tensor_s (FloatTensor): spliced mRNA expressions.
+        tensor_u (FloatTensor): unspliced mRNA expressions.
+        tensor_v (FloatTensor): Velocity in the raw dimensional space.
+        
+    Returns:
+        Anndata: Anndata object in the latent space.
+    
+    &#34;&#34;&#34;
+    x = model.encoder(tensor_x).detach().cpu().numpy()
+    s = model.encoder(tensor_s).detach().cpu().numpy()
+    u = model.encoder(tensor_u).detach().cpu().numpy()
+    v = model.encoder(tensor_s + tensor_v).detach().cpu().numpy() - s
+    
+    new_adata = anndata.AnnData(x)
+    new_adata.layers[&#39;spliced&#39;] = s
+    new_adata.layers[&#39;unspliced&#39;] = u
+    new_adata.layers[&#39;velocity&#39;] = v
+    new_adata.obs.index = adata.obs.index.copy()
+    
+    for key in adata.obs:
+        new_adata.obs[key] = adata.obs[key].copy()
+    for key in adata.obsm:
+        new_adata.obsm[key] = adata.obsm[key].copy()
+    for key in adata.obsp:
+        new_adata.obsp[key] = adata.obsp[key].copy()
+    for clr in [key for key in adata.uns if key.split(&#34;_&#34;)[-1] == &#39;colors&#39; ]:
+        new_adata.uns[clr] = adata.uns[clr]
+    
+    scv.pp.moments(new_adata, n_pcs=30, n_neighbors=30)
+    scv.tl.velocity_graph(new_adata, vkey=&#39;velocity&#39;)
+    scv.pl.velocity_embedding_stream(new_adata, vkey=&#34;velocity&#34;, basis=args.vis_key,
+                                    title=&#34;Project Original Velocity into Low-Dim Space&#34;,
+                                    save=&#39;un_colored_velo_projection.png&#39;
+                                    )
+    return new_adata</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.fit_model"><code class="name flex">
+<span>def <span class="ident">fit_model</span></span>(<span>args, adata, model, inputs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Fit a velo autoencoder</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>args</code></strong> :&ensp;<code>ArgumentParser</code></dt>
+<dd>ArgumentParser object</dd>
+<dt><strong><code>adata</code></strong> :&ensp;<code>Anndata</code></dt>
+<dd>Anndata object</dd>
+<dt><strong><code>model</code></strong> :&ensp;<code>nn.Module</code></dt>
+<dd>VeloAE instance</dd>
+<dt><strong><code>inputs</code></strong> :&ensp;<code>list</code> of <code>tensors</code></dt>
+<dd>inputs for training VeloAE, e.g., [x, s, u]</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>nn.Module</code></dt>
+<dd>Fitted model.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def fit_model(args, adata, model, inputs):
+    &#34;&#34;&#34;Fit a velo autoencoder
+    
+    Args:
+        args (ArgumentParser): ArgumentParser object
+        adata (Anndata): Anndata object
+        model (nn.Module): VeloAE instance
+        inputs (list of tensors): inputs for training VeloAE, e.g., [x, s, u]
+    
+    Returns:
+        nn.Module: Fitted model.
+    &#34;&#34;&#34;
+    optimizer = torch.optim.AdamW(model.parameters(), 
+                                  lr=args.lr, 
+                                  weight_decay=args.weight_decay)
+    
+    model.train()
+    i, losses = 0, [sys.maxsize]
+    while i &lt; args.n_epochs:
+        i += 1
+        loss = train_step_AE(inputs, model, optimizer)                
+        losses.append(loss)
+        if i % args.log_interval == 0:
+            print(&#34;Train Epoch: {:2d}/{:2d} \tLoss: {:.6f}&#34;
+                  .format(i, args.n_epochs, losses[-1]))
+
+    plt.plot(losses[1:])
+    plt.savefig(os.path.join(args.output, &#34;training_loss.png&#34;))
+    torch.save(model.state_dict(), os.path.join(args.output, args.model_name))
+    return model</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.get_ablation_CohAgg"><code class="name flex">
+<span>def <span class="ident">get_ablation_CohAgg</span></span>(<span>edge_index, edge_weight, in_dim, z_dim, h_dim, device)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get Ablation Cohort Aggregation instance</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>edge_index</code></strong> :&ensp;<code>LongTensor</code></dt>
+<dd>shape (2, ?), edge indices</dd>
+<dt><strong><code>edge_weight</code></strong> :&ensp;<code>FloatTensor</code></dt>
+<dd>shape (?), edge weights.</dd>
+<dt><strong><code>in_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the input</dd>
+<dt><strong><code>z_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the low-dimensional space</dd>
+<dt><strong><code>h_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of intermediate layers in MLP</dd>
+<dt><strong><code>device</code></strong> :&ensp;<code>torch.device</code></dt>
+<dd>torch device object.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>nn.Module</code></dt>
+<dd>model instance</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_ablation_CohAgg(
+                edge_index,
+                edge_weight,
+                in_dim,
+                z_dim,
+                h_dim,
+                device):
+    &#34;&#34;&#34;Get Ablation Cohort Aggregation instance
+    
+    Args:
+        edge_index (LongTensor): shape (2, ?), edge indices
+        edge_weight (FloatTensor): shape (?), edge weights.
+        in_dim (int): dimensionality of the input
+        z_dim (int): dimensionality of the low-dimensional space
+        h_dim (int): dimensionality of intermediate layers in MLP
+        device (torch.device): torch device object.
+
+    Returns:
+        nn.Module: model instance
+    &#34;&#34;&#34;
+    from .model import AblationCohAgg
+    model = AblationCohAgg(
+        edge_index,
+        edge_weight,
+        in_dim,
+        z_dim,
+        h_dim,
+        device
+    )
+    return model.to(device)</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.get_ablation_attcomb"><code class="name flex">
+<span>def <span class="ident">get_ablation_attcomb</span></span>(<span>z_dim, n_genes, n_cells, h_dim, k_dim, G_rep, g_rep_dim, device)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Instantiate an AttenComb configuration for ablation study.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>z_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the low-dimensional space</dd>
+<dt><strong><code>n_genes</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of genes</dd>
+<dt><strong><code>n_cells</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of cells</dd>
+<dt><strong><code>h_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of intermediate layers in MLP</dd>
+<dt><strong><code>k_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of keys for attention computation</dd>
+<dt><strong><code>G_rep</code></strong> :&ensp;<code>np.ndarry</code></dt>
+<dd>representation for genes, e.g. PCA over gene profiles.</dd>
+<dt><strong><code>g_rep_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of gene representations.<h1 id="either-g_rep-or-n_genes-g_rep_dim-should-be-provided">Either G_rep or (n_genes, g_rep_dim) should be provided.</h1>
+<h1 id="priority-is-given-to-g_rep">priority is given to G_rep.</h1>
+</dd>
+<dt><strong><code>device</code></strong> :&ensp;<code>torch.device</code></dt>
+<dd>torch device object.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>nn.Module</code></dt>
+<dd>model instance</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_ablation_attcomb(
+                        z_dim,
+                        n_genes,
+                        n_cells,
+                        h_dim,
+                        k_dim,
+                        G_rep,
+                        g_rep_dim,
+                        device):
+    &#34;&#34;&#34;Instantiate an AttenComb configuration for ablation study.
+    
+    Args:
+        z_dim (int): dimensionality of the low-dimensional space
+        n_genes (int): number of genes
+        n_cells (int): number of cells
+        h_dim (int): dimensionality of intermediate layers in MLP
+        k_dim (int): dimensionality of keys for attention computation
+        G_rep (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+        g_rep_dim (int): dimensionality of gene representations.
+            # Either G_rep or (n_genes, g_rep_dim) should be provided.
+            # priority is given to G_rep.
+        device (torch.device): torch device object.
+    
+    Returns:
+        nn.Module: model instance
+    &#34;&#34;&#34;
+    from .model import AblationAttComb
+    model = AblationAttComb(
+        n_genes,
+        z_dim,
+        n_genes,
+        n_cells,
+        h_dim,
+        k_dim,
+        G_rep,
+        g_rep_dim,
+        device
+    )
+    return model.to(device)</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.get_baseline_AE"><code class="name flex">
+<span>def <span class="ident">get_baseline_AE</span></span>(<span>in_dim, z_dim, h_dim)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Instantiate a Baseline Autoencoder.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>in_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of input.</dd>
+<dt><strong><code>z_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of low-dimensional space.</dd>
+<dt><strong><code>h_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of intermediate layers in MLP.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>nn.Module</code></dt>
+<dd>AE instance</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_baseline_AE(in_dim, z_dim, h_dim):
+    &#34;&#34;&#34;Instantiate a Baseline Autoencoder.
+    
+    Args:
+        in_dim (int): dimensionality of input.
+        z_dim (int): dimensionality of low-dimensional space.
+        h_dim (int): dimensionality of intermediate layers in MLP.
+            
+    Returns:
+        nn.Module: AE instance
+    
+    
+    &#34;&#34;&#34;    
+    from .baseline import AutoEncoder
+    model = AutoEncoder(
+                in_dim,
+                z_dim,
+                h_dim
+                )
+    return model</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.get_parser"><code class="name flex">
+<span>def <span class="ident">get_parser</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the argument parser</p>
+<h2 id="returns">Returns</h2>
+<p>Parser object.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_parser():
+    &#34;&#34;&#34;Get the argument parser
+    
+    Returns:
+        Parser object.
+        
+    &#34;&#34;&#34;
+    parser = argparse.ArgumentParser(description=&#39;VeloAutoencoder Experiment settings&#39;)
+    parser.add_argument(&#39;--data-dir&#39;, type=str, default=None, metavar=&#39;PATH&#39;,
+                        help=&#39;default directory to adata file&#39;)
+    parser.add_argument(&#39;--model-name&#39;, type=str, default=&#34;tmp_model.cpt&#34;, metavar=&#39;PATH&#39;,
+                        help=&#34;&#34;&#34;save the trained model with this name in training, or 
+                                read the model for velocity projection if the model has
+                                already been trained.
+                             &#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--exp-name&#39;, type=str, default=&#34;experiment&#34;, metavar=&#39;PATH&#39;,
+                        help=&#39;name of the experiment&#39;)
+    parser.add_argument(&#39;--adata&#39;, type=str, metavar=&#39;PATH&#39;, 
+                        help=&#34;&#34;&#34;path to the Anndata file with transcriptom, spliced and unspliced
+                                mRNA expressions, the adata should be already preprocessed and with
+                                velocity estimated in the original space.&#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--use_x&#39;, type=bool, default=True,
+                        help=&#34;&#34;&#34;whether or not to enroll transcriptom reads for training 
+                                (default: True).&#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--use_s&#39;, type=bool, default=True,
+                        help=&#34;&#34;&#34;whether or not to enroll spliced mRNA reads for training 
+                                (default: True).&#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--use_u&#39;, type=bool, default=True,
+                        help=&#34;&#34;&#34;whether or not to enroll unspliced mRNA reads for training 
+                                (default: True).&#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--refit&#39;, type=int, default=1,
+                        help=&#34;&#34;&#34;whether or not refitting veloAE, if False, need to provide
+                                a fitted model for velocity projection. (default=1)
+                             &#34;&#34;&#34;
+                       )
+    parser.add_argument(&#39;--output&#39;, type=str, default=&#34;./&#34;,
+                        help=&#34;Path to output directory (default: ./)&#34;
+                       )
+    parser.add_argument(&#39;--vis-key&#39;, type=str, default=&#34;X_umap&#34;,
+                        help=&#34;Key to visualization embeddings in adata.obsm (default: X_umap)&#34;
+                       )
+    parser.add_argument(&#39;--z-dim&#39;, type=int, default=100,
+                        help=&#39;dimentionality of the hidden representation Z (default: 100)&#39;)
+    parser.add_argument(&#39;--g-rep-dim&#39;, type=int, default=100,
+                        help=&#39;dimentionality of gene representation (default: 256)&#39;)
+    parser.add_argument(&#39;--h-dim&#39;, type=int, default=256,
+                        help=&#39;dimentionality of intermedeate layers of MLP (default: 256)&#39;)
+    parser.add_argument(&#39;--k-dim&#39;, type=int, default=50,
+                        help=&#39;dimentionality of attention keys/queries (default: 50)&#39;)
+    parser.add_argument(&#39;--conv-thred&#39;, type=float, default=1e-6,
+                        help=&#39;convergence threshold of early-stopping (default: 1e-6)&#39;)
+    parser.add_argument(&#39;--n-epochs&#39;, type=int, default=20000, metavar=&#39;N&#39;,
+                        help=&#39;number of epochs to train (default: 20000)&#39;)
+    parser.add_argument(&#39;--lr&#39;, type=float, default=1e-5,
+                        help=&#39;learning rate (default: 1e-5)&#39;)
+    parser.add_argument(&#39;--weight-decay&#39;, type=float, default=0.0,
+                        help=&#39;weight decay strength (default 0.0)&#39;)
+    parser.add_argument(&#39;--seed&#39;, type=int, default=42, metavar=&#39;S&#39;,
+                        help=&#39;random seed (default: 42)&#39;)
+    parser.add_argument(&#39;--log-interval&#39;, type=int, default=100,
+                        help=&#39;how frequntly logging training status (default: 100)&#39;)
+    parser.add_argument(&#39;--device&#39;, type=str, default=&#34;cpu&#34;,
+                        help=&#39;specify device: e.g., cuda:0, cpu (default: cpu)&#39;)
+    return parser</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.get_veloAE"><code class="name flex">
+<span>def <span class="ident">get_veloAE</span></span>(<span>adata, z_dim, n_genes, n_cells, h_dim, k_dim, G_embeddings=None, g_rep_dim=100, device=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Instantiate a VeloAE object.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>adata</code></strong> :&ensp;<code>Anndata</code></dt>
+<dd>Anndata object</dd>
+<dt><strong><code>z_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of the low-dimensional space</dd>
+<dt><strong><code>n_genes</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of genes</dd>
+<dt><strong><code>n_cells</code></strong> :&ensp;<code>int</code></dt>
+<dd>number of cells</dd>
+<dt><strong><code>h_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of intermediate layers in MLP</dd>
+<dt><strong><code>k_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of keys for attention computation</dd>
+<dt><strong><code>G_embeddings</code></strong> :&ensp;<code>np.ndarry</code></dt>
+<dd>representation for genes, e.g. PCA over gene profiles.</dd>
+<dt><strong><code>g_rep_dim</code></strong> :&ensp;<code>int</code></dt>
+<dd>dimensionality of gene representations.<h1 id="either-g_rep-or-n_genes-g_rep_dim-should-be-provided">Either G_rep or (n_genes, g_rep_dim) should be provided.</h1>
+<h1 id="priority-is-given-to-g_rep">priority is given to G_rep.</h1>
+</dd>
+<dt><strong><code>device</code></strong> :&ensp;<code>torch.device</code></dt>
+<dd>torch device object.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>nn.Module</code></dt>
+<dd>model instance</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_veloAE(
+             adata, 
+             z_dim, 
+             n_genes, 
+             n_cells, 
+             h_dim, 
+             k_dim, 
+             G_embeddings=None, 
+             g_rep_dim=100,
+             device=None):
+    &#34;&#34;&#34;Instantiate a VeloAE object.
+    
+    Args:
+        adata (Anndata): Anndata object
+        z_dim (int): dimensionality of the low-dimensional space
+        n_genes (int): number of genes
+        n_cells (int): number of cells
+        h_dim (int): dimensionality of intermediate layers in MLP
+        k_dim (int): dimensionality of keys for attention computation
+        G_embeddings (np.ndarry): representation for genes, e.g. PCA over gene profiles.
+        g_rep_dim (int): dimensionality of gene representations.
+            # Either G_rep or (n_genes, g_rep_dim) should be provided.
+            # priority is given to G_rep.
+        device (torch.device): torch device object.
+    
+    Returns:
+        nn.Module: model instance
+    &#34;&#34;&#34;
+    from .model import VeloAutoencoder
+    conn = adata.obsp[&#39;connectivities&#39;]
+    nb_indices = adata.uns[&#39;neighbors&#39;][&#39;indices&#39;]
+    xs, ys = np.repeat(range(n_cells), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
+    edge_weight = torch.FloatTensor(conn[xs,ys]).view(-1).to(device)
+    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), xs.reshape(1, -1)])).to(device)
+    model = VeloAutoencoder(
+                edge_index,
+                edge_weight,
+                n_genes,
+                z_dim,
+                n_genes,
+                n_cells,
+                h_dim=h_dim,
+                k_dim=k_dim,
+                G_rep=G_embeddings,
+                g_rep_dim=g_rep_dim,
+                device=device
+                )
+    return model.to(device)</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.init_adata"><code class="name flex">
+<span>def <span class="ident">init_adata</span></span>(<span>args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize Anndata object</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>args</code></strong> :&ensp;<code>ArgumentParser</code></dt>
+<dd>ArgumentParser instance</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Anndata</code></dt>
+<dd>preprocessed Anndata instance</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_adata(args):
+    &#34;&#34;&#34;Initialize Anndata object
+    
+    Args:
+        args (ArgumentParser): ArgumentParser instance
+        
+    Returns:
+        Anndata: preprocessed Anndata instance
+    &#34;&#34;&#34;
+    adata = sc.read(args.adata)
+    scv.utils.show_proportions(adata)
+    scv.pp.filter_and_normalize(adata, min_shared_counts=30, n_top_genes=2000)
+    scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
+    scv.tl.velocity(adata, vkey=&#39;stc_velocity&#39;, mode=&#34;stochastic&#34;)
+    return adata</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.init_model"><code class="name flex">
+<span>def <span class="ident">init_model</span></span>(<span>adata, args, device)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize a model</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>adata</code></strong> :&ensp;<code>Anndata</code></dt>
+<dd>Anndata object.</dd>
+<dt><strong><code>args</code></strong> :&ensp;<code>ArgumentParser</code></dt>
+<dd>ArgumentParser instance.</dd>
+<dt><strong><code>device</code></strong> :&ensp;<code>torch.device</code></dt>
+<dd>device instance</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>nn.Module</code></dt>
+<dd>model instance</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_model(adata, args, device):
+    &#34;&#34;&#34;Initialize a model
+    
+    Args:
+        adata (Anndata): Anndata object.
+        args (ArgumentParser): ArgumentParser instance.
+        device (torch.device): device instance
+        
+    Returns:
+        nn.Module: model instance
+    &#34;&#34;&#34;
+    from sklearn.decomposition import PCA
+    n_cells, n_genes = adata.X.shape
+    G_embeddings = PCA(n_components=args.g_rep_dim).fit_transform(adata.X.T.toarray())
+    model = get_veloAE(
+                     adata, 
+                     args.z_dim, 
+                     n_genes, 
+                     n_cells, 
+                     args.h_dim, 
+                     args.k_dim, 
+                     G_embeddings=G_embeddings, 
+                     g_rep_dim=args.g_rep_dim,
+                     device=device
+                    )
+    return model</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.new_adata"><code class="name flex">
+<span>def <span class="ident">new_adata</span></span>(<span>adata, x, s, u, v=None, copy_moments=True, new_v_key='new_velocity', X_emb_key='X_umap')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Copy a new Anndata object while keeping some original information.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>adata</code></strong> :&ensp;<code>Anndata</code></dt>
+<dd>Anndata object</dd>
+<dt><strong><code>x</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>new transcriptome.</dd>
+<dt><strong><code>s</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>new spliced mRNA expression.</dd>
+<dt><strong><code>u</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>new unspliced mRNA expression.</dd>
+<dt><strong><code>v</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>new velocity.</dd>
+<dt><strong><code>copy_moments</code></strong> :&ensp;<code>bool</code></dt>
+<dd>whether to copy the moments.</dd>
+<dt><strong><code>X_emb_key</code></strong> :&ensp;<code>str</code></dt>
+<dd>key string of the embedding of X for visualization.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Anndata</code></dt>
+<dd>a new Anndata object</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def new_adata(adata, x, s, u, v=None, 
+              copy_moments=True, 
+              new_v_key=&#34;new_velocity&#34;, 
+              X_emb_key=&#34;X_umap&#34;):
+    &#34;&#34;&#34;Copy a new Anndata object while keeping some original information.
+    
+    Args:
+        adata (Anndata): Anndata object
+        x (np.ndarray): new transcriptome.
+        s (np.ndarray): new spliced mRNA expression.
+        u (np.ndarray): new unspliced mRNA expression.
+        v (np.ndarray): new velocity.
+        copy_moments (bool): whether to copy the moments.
+        X_emb_key (str): key string of the embedding of X for visualization.
+    
+    Returns:
+        Anndata: a new Anndata object
+    
+    &#34;&#34;&#34;
+    new_adata = anndata.AnnData(x)
+    new_adata.layers[&#39;spliced&#39;] = s
+    new_adata.layers[&#39;unspliced&#39;] = u
+    if not v is None:
+        new_adata.layers[new_v_key] = v
+        
+    new_adata.obs.index = adata.obs.index.copy()
+    
+    for key in adata.obs:
+        new_adata.obs[key] = adata.obs[key].copy()
+        
+    new_adata.obsm[&#39;X_pca&#39;] = adata.obsm[&#39;X_pca&#39;].copy()
+    new_adata.obsp[&#39;distances&#39;] = adata.obsp[&#39;distances&#39;].copy()
+    new_adata.obsp[&#39;connectivities&#39;] = adata.obsp[&#39;connectivities&#39;].copy()
+    
+    if copy_moments:
+        new_adata.layers[&#39;Ms&#39;] = adata.layers[&#39;Ms&#39;].copy()
+        new_adata.layers[&#39;Mu&#39;] = adata.layers[&#39;Mu&#39;].copy()
+        
+    for clr in [key for key in adata.uns if key.split(&#34;_&#34;)[-1] == &#39;colors&#39; ]:
+        new_adata.uns[clr] = adata.uns[clr]
+        
+    new_adata.uns[&#39;neighbors&#39;] = adata.uns[&#39;neighbors&#39;].copy()
+    new_adata.obsm[X_emb_key] = adata.obsm[X_emb_key].copy()
+    return new_adata</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.sklearn_decompose"><code class="name flex">
+<span>def <span class="ident">sklearn_decompose</span></span>(<span>method, X, S, U, V)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>General interface using sklearn.decomposition.XXX method</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>method</code></strong> :&ensp;<code>sklearn.decomposition class</code></dt>
+<dd>e.g., instance of sklearn.decomposition.PCA</dd>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>High-dimensional transcriptom.</dd>
+<dt><strong><code>S</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>High-dimensional spliced mRNA expression.</dd>
+<dt><strong><code>U</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>High-dimensional unspliced mRNA expression.</dd>
+<dt><strong><code>V</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>High-dimensional cell velocity estimation.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>decomposed low-dimensional representations for X, S, U and V</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sklearn_decompose(method, X, S, U, V):
+    &#34;&#34;&#34;General interface using sklearn.decomposition.XXX method
+    
+    Args:
+        method (sklearn.decomposition class): e.g., instance of sklearn.decomposition.PCA
+        X (np.ndarray): High-dimensional transcriptom.
+        S (np.ndarray): High-dimensional spliced mRNA expression.
+        U (np.ndarray): High-dimensional unspliced mRNA expression.
+        V (np.ndarray): High-dimensional cell velocity estimation.
+        
+    Returns:
+        np.ndarray: decomposed low-dimensional representations for X, S, U and V
+    
+    &#34;&#34;&#34;
+    n_cells = X.shape[0]
+    X_orig = np.concatenate([
+                    X, 
+                    S, 
+                    U
+                   ], axis=0)
+    
+    method.fit(X_orig)
+    x = method.transform(X)
+    s = method.transform(S)
+    u = method.transform(U)
+    v = method.transform(S + V) - s
+    return x, s, u, v</code></pre>
+</details>
+</dd>
+<dt id="veloproj.util.train_step_AE"><code class="name flex">
+<span>def <span class="ident">train_step_AE</span></span>(<span>Xs, model, optimizer)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Conduct a train step.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>Xs</code></strong> :&ensp;<code>list[FloatTensor]</code></dt>
+<dd>inputs for Autoencoder</dd>
+<dt><strong><code>model</code></strong> :&ensp;<code>nn.Module</code></dt>
+<dd>Instance of Autoencoder class</dd>
+<dt><strong><code>optimizer</code></strong> :&ensp;<code>nn.optim.Optimizer</code></dt>
+<dd>instance of pytorch Optimizer class</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>loss of this step.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def train_step_AE(Xs, model, optimizer):
+    &#34;&#34;&#34;Conduct a train step.
+    
+    Args:
+        Xs (list[FloatTensor]): inputs for Autoencoder
+        model (nn.Module): Instance of Autoencoder class
+        optimizer (nn.optim.Optimizer): instance of pytorch Optimizer class
+    
+    Returns:
+        float: loss of this step.
+        
+    &#34;&#34;&#34;
+    optimizer.zero_grad()
+    loss = 0
+    for X in Xs:
+        loss += model(X)
+    loss.backward()
+    optimizer.step()
+    return loss.item()</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="veloproj" href="index.html">veloproj</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="veloproj.util.do_projection" href="#veloproj.util.do_projection">do_projection</a></code></li>
+<li><code><a title="veloproj.util.fit_model" href="#veloproj.util.fit_model">fit_model</a></code></li>
+<li><code><a title="veloproj.util.get_ablation_CohAgg" href="#veloproj.util.get_ablation_CohAgg">get_ablation_CohAgg</a></code></li>
+<li><code><a title="veloproj.util.get_ablation_attcomb" href="#veloproj.util.get_ablation_attcomb">get_ablation_attcomb</a></code></li>
+<li><code><a title="veloproj.util.get_baseline_AE" href="#veloproj.util.get_baseline_AE">get_baseline_AE</a></code></li>
+<li><code><a title="veloproj.util.get_parser" href="#veloproj.util.get_parser">get_parser</a></code></li>
+<li><code><a title="veloproj.util.get_veloAE" href="#veloproj.util.get_veloAE">get_veloAE</a></code></li>
+<li><code><a title="veloproj.util.init_adata" href="#veloproj.util.init_adata">init_adata</a></code></li>
+<li><code><a title="veloproj.util.init_model" href="#veloproj.util.init_model">init_model</a></code></li>
+<li><code><a title="veloproj.util.new_adata" href="#veloproj.util.new_adata">new_adata</a></code></li>
+<li><code><a title="veloproj.util.sklearn_decompose" href="#veloproj.util.sklearn_decompose">sklearn_decompose</a></code></li>
+<li><code><a title="veloproj.util.train_step_AE" href="#veloproj.util.train_step_AE">train_step_AE</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
