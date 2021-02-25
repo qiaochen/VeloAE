@@ -6,8 +6,13 @@ This module contains util functions.
 """
 import torch
 import numpy as np
+import os, sys
 import anndata
+import scvelo as scv
+import scanpy as sc
 import argparse
+
+from matplotlib import pyplot as plt
 
 
 def get_parser():
@@ -17,13 +22,45 @@ def get_parser():
         Parser object.
         
     """
-    parser = argparse.ArgumentParser(description='Experiment settings')
+    parser = argparse.ArgumentParser(description='VeloAutoencoder Experiment settings')
     parser.add_argument('--data-dir', type=str, default=None, metavar='PATH',
                         help='default directory to adata file')
     parser.add_argument('--model-name', type=str, default="tmp_model.cpt", metavar='PATH',
-                        help='save the trained model with this name')
+                        help="""save the trained model with this name in training, or 
+                                read the model for velocity projection if the model has
+                                already been trained.
+                             """
+                       )
     parser.add_argument('--exp-name', type=str, default="experiment", metavar='PATH',
                         help='name of the experiment')
+    parser.add_argument('--adata', type=str, metavar='PATH', 
+                        help="""path to the Anndata file with transcriptom, spliced and unspliced
+                                mRNA expressions, the adata should be already preprocessed and with
+                                velocity estimated in the original space."""
+                       )
+    parser.add_argument('--use_x', type=bool, default=True,
+                        help="""whether or not to enroll transcriptom reads for training 
+                                (default: True)."""
+                       )
+    parser.add_argument('--use_s', type=bool, default=True,
+                        help="""whether or not to enroll spliced mRNA reads for training 
+                                (default: True)."""
+                       )
+    parser.add_argument('--use_u', type=bool, default=True,
+                        help="""whether or not to enroll unspliced mRNA reads for training 
+                                (default: True)."""
+                       )
+    parser.add_argument('--refit', type=int, default=1,
+                        help="""whether or not refitting veloAE, if False, need to provide
+                                a fitted model for velocity projection. (default=1)
+                             """
+                       )
+    parser.add_argument('--output', type=str, default="./",
+                        help="Path to output directory (default: ./)"
+                       )
+    parser.add_argument('--vis-key', type=str, default="X_umap",
+                        help="Key to visualization embeddings in adata.obsm (default: X_umap)"
+                       )
     parser.add_argument('--z-dim', type=int, default=100,
                         help='dimentionality of the hidden representation Z (default: 100)')
     parser.add_argument('--g-rep-dim', type=int, default=100,
@@ -34,19 +71,147 @@ def get_parser():
                         help='dimentionality of attention keys/queries (default: 50)')
     parser.add_argument('--conv-thred', type=float, default=1e-6,
                         help='convergence threshold of early-stopping (default: 1e-6)')
-    parser.add_argument('--n-epochs', type=int, default=10000, metavar='N',
-                        help='number of epochs to train (default: 10000)')
-    parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
-                        help='learning rate (default: 1e-4)')
+    parser.add_argument('--n-epochs', type=int, default=20000, metavar='N',
+                        help='number of epochs to train (default: 20000)')
+    parser.add_argument('--lr', type=float, default=1e-5,
+                        help='learning rate (default: 1e-5)')
     parser.add_argument('--weight-decay', type=float, default=0.0,
                         help='weight decay strength (default 0.0)')
     parser.add_argument('--seed', type=int, default=42, metavar='S',
                         help='random seed (default: 42)')
-    parser.add_argument('--log-interval', type=int, default=100, metavar='N',
+    parser.add_argument('--log-interval', type=int, default=100,
                         help='how frequntly logging training status (default: 100)')
     parser.add_argument('--device', type=str, default="cpu",
                         help='specify device: e.g., cuda:0, cpu (default: cpu)')
     return parser
+
+
+def init_model(adata, args, device):
+    """Initialize a model
+    
+    Args:
+        adata (Anndata): Anndata object.
+        args (ArgumentParser): ArgumentParser instance.
+        device (torch.device): device instance
+        
+    Returns:
+        nn.Module: model instance
+    """
+    from sklearn.decomposition import PCA
+    n_cells, n_genes = adata.X.shape
+    G_embeddings = PCA(n_components=args.g_rep_dim).fit_transform(adata.X.T.toarray())
+    model = get_veloAE(
+                     adata, 
+                     args.z_dim, 
+                     n_genes, 
+                     n_cells, 
+                     args.h_dim, 
+                     args.k_dim, 
+                     G_embeddings=G_embeddings, 
+                     g_rep_dim=args.g_rep_dim,
+                     device=device
+                    )
+    return model
+
+
+def fit_model(args, adata, model, inputs):
+    """Fit a velo autoencoder
+    
+    Args:
+        args (ArgumentParser): ArgumentParser object
+        adata (Anndata): Anndata object
+        model (nn.Module): VeloAE instance
+        inputs (list of tensors): inputs for training VeloAE, e.g., [x, s, u]
+    
+    Returns:
+        nn.Module: Fitted model.
+    """
+    optimizer = torch.optim.AdamW(model.parameters(), 
+                                  lr=args.lr, 
+                                  weight_decay=args.weight_decay)
+    
+    model.train()
+    i, losses = 0, [sys.maxsize]
+    while i < args.n_epochs:
+        i += 1
+        loss = train_step_AE(inputs, model, optimizer)                
+        losses.append(loss)
+        if i % args.log_interval == 0:
+            print("Train Epoch: {:2d}/{:2d} \tLoss: {:.6f}"
+                  .format(i, args.n_epochs, losses[-1]))
+
+    plt.plot(losses[1:])
+    plt.savefig(os.path.join(args.output, "training_loss.png"))
+    torch.save(model.state_dict(), os.path.join(args.output, args.model_name))
+    return model
+
+def do_projection(model, 
+                  adata,
+                  args,
+                  tensor_x, 
+                  tensor_s, 
+                  tensor_u, 
+                  tensor_v
+                 ):
+    """Project everything into the low-dimensional space
+    
+    Args:
+        model (nn.Module): trained Model instance.
+        adata (Anndata): Anndata instance in the raw dimension.
+        args (ArgumentParser): ArgumentParser instance.
+        tensor_x (FloatTensor): transcriptom expressions.
+        tensor_s (FloatTensor): spliced mRNA expressions.
+        tensor_u (FloatTensor): unspliced mRNA expressions.
+        tensor_v (FloatTensor): Velocity in the raw dimensional space.
+        
+    Returns:
+        Anndata: Anndata object in the latent space.
+    
+    """
+    x = model.encoder(tensor_x).detach().cpu().numpy()
+    s = model.encoder(tensor_s).detach().cpu().numpy()
+    u = model.encoder(tensor_u).detach().cpu().numpy()
+    v = model.encoder(tensor_s + tensor_v).detach().cpu().numpy() - s
+    
+    new_adata = anndata.AnnData(x)
+    new_adata.layers['spliced'] = s
+    new_adata.layers['unspliced'] = u
+    new_adata.layers['velocity'] = v
+    new_adata.obs.index = adata.obs.index.copy()
+    
+    for key in adata.obs:
+        new_adata.obs[key] = adata.obs[key].copy()
+    for key in adata.obsm:
+        new_adata.obsm[key] = adata.obsm[key].copy()
+    for key in adata.obsp:
+        new_adata.obsp[key] = adata.obsp[key].copy()
+    for clr in [key for key in adata.uns if key.split("_")[-1] == 'colors' ]:
+        new_adata.uns[clr] = adata.uns[clr]
+    
+    scv.pp.moments(new_adata, n_pcs=30, n_neighbors=30)
+    scv.tl.velocity_graph(new_adata, vkey='velocity')
+    scv.pl.velocity_embedding_stream(new_adata, vkey="velocity", basis=args.vis_key,
+                                    title="Project Original Velocity into Low-Dim Space",
+                                    save='un_colored_velo_projection.png'
+                                    )
+    return new_adata
+
+
+def init_adata(args):
+    """Initialize Anndata object
+    
+    Args:
+        args (ArgumentParser): ArgumentParser instance
+        
+    Returns:
+        Anndata: preprocessed Anndata instance
+    """
+    adata = sc.read(args.adata)
+    scv.utils.show_proportions(adata)
+    scv.pp.filter_and_normalize(adata, min_shared_counts=30, n_top_genes=2000)
+    scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
+    scv.tl.velocity(adata, vkey='stc_velocity', mode="stochastic")
+    return adata
 
     
 def new_adata(adata, x, s, u, v=None, 
