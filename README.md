@@ -31,7 +31,7 @@ Basic execution command and arguments:
 #### Project velocity into low-dimensional space using a trained model.
 
 ```
-veloproj --refit 0 --adata /data/groups/yhhuang/scNT/neuron_splicing_lite.h5ad --device cuda:3 --model-name ./notebooks/scNTseq/scNT_model.cpt
+veloproj --refit 0 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name ./notebooks/dentategyrus/dentategyrus_model.cpt
 ```
 - Arguments:
     - --refit: if 0, do not fit a new model, should specify an existing model for projection.
@@ -46,7 +46,7 @@ veloproj --refit 0 --adata /data/groups/yhhuang/scNT/neuron_splicing_lite.h5ad -
 #### Fit a new veloAE model and project velocity into low-dimensional space.
 
 ```
-veloproj --lr 8e-7 --refit 1 --adata /data/groups/yhhuang/scNT/neuron_splicing_lite.h5ad --device cuda:3 --model-name scNT_model.cpt 
+veloproj --lr 5e-6 --refit 1 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name dentategyrus_model.cpt
 ```
 - Arguments:
     - --lr: learning rate, (should be tunned to minimize loss robustly)
