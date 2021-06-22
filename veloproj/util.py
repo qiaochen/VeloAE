@@ -13,6 +13,8 @@ import scanpy as sc
 import argparse
 
 from matplotlib import pyplot as plt
+from sklearn.decomposition import PCA
+from .model import leastsq_pt
 
 
 def get_parser():
@@ -38,18 +40,18 @@ def get_parser():
                                 mRNA expressions, the adata should be already preprocessed and with
                                 velocity estimated in the original space."""
                        )
-    parser.add_argument('--use_x', type=bool, default=True,
+    parser.add_argument('--use_x', type=bool, default=False,
                         help="""whether or not to enroll transcriptom reads for training 
-                                (default: True)."""
+                                (default: False)."""
                        )
-    parser.add_argument('--use_s', type=bool, default=True,
-                        help="""whether or not to enroll spliced mRNA reads for training 
-                                (default: True)."""
-                       )
-    parser.add_argument('--use_u', type=bool, default=True,
-                        help="""whether or not to enroll unspliced mRNA reads for training 
-                                (default: True)."""
-                       )
+    # parser.add_argument('--use_s', type=bool, default=True,
+    #                     help="""whether or not to enroll spliced mRNA reads for training 
+    #                             (default: True)."""
+    #                    )
+    # parser.add_argument('--use_u', type=bool, default=True,
+    #                     help="""whether or not to enroll unspliced mRNA reads for training 
+    #                             (default: True)."""
+    #                    )
     parser.add_argument('--refit', type=int, default=1,
                         help="""whether or not refitting veloAE, if False, need to provide
                                 a fitted model for velocity projection. (default=1)
@@ -83,8 +85,37 @@ def get_parser():
                         help='how frequntly logging training status (default: 100)')
     parser.add_argument('--device', type=str, default="cpu",
                         help='specify device: e.g., cuda:0, cpu (default: cpu)')
+    parser.add_argument('--gumbsoft_tau', type=float, default=1.0,
+                        help='specify the temperature parameter of gumbel softmax, a small number (e.g., 1.0) \
+                         makes attention distribution sparse, while a large number (e.g., 10) makes attention \
+                              evenly distributed (default: 1.0)')
+    parser.add_argument('--aux_weight', type=float, default=1.0,
+                        help='specify the weight of auxiliary loss, i.e., linear regression (u = gamma * s ) on \
+                            low-dimensional space (default: 1.0)')
+    parser.add_argument('--nb_graph_src', type=str, default="XSU",
+                        help='specify data used to construct neighborhood graph, "XSU" indicates using \
+                             transpriptom, spliced and unspliced counts, "SU" indicates only the latter \
+                             two (default: XSU)')
+    parser.add_argument('--n_raw_gene', type=int, default=2000,
+                        help='Number of genes to keep in the raw gene space (default: 2000)')
     return parser
 
+
+def get_G_emb(adata, g_rep_dim):
+    """Get low-dim representations for genes using PCA
+
+    Args:
+        adata (Anndata): Anndata object with Ms, Mu computed
+        g_rep_dim (int): dimensionality of low-dim gene representations
+    """
+    mts = np.hstack([
+        adata.X.toarray().T, 
+        adata.layers['Ms'].T, 
+        adata.layers['Mu'].T
+    ])
+    G_rep = PCA(n_components=g_rep_dim).fit_transform(mts)
+    return G_rep
+  
 
 def init_model(adata, args, device):
     """Initialize a model
@@ -97,7 +128,6 @@ def init_model(adata, args, device):
     Returns:
         nn.Module: model instance
     """
-    from sklearn.decomposition import PCA
     n_cells, n_genes = adata.X.shape
     G_embeddings = PCA(n_components=args.g_rep_dim).fit_transform(adata.X.T.toarray())
     model = get_veloAE(
@@ -213,11 +243,30 @@ def init_adata(args):
     scv.tl.velocity(adata, vkey='stc_velocity', mode="stochastic")
     return adata
 
+
+def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU"):
+    """Construct neighborhood graph for target adata using expression data 
+    from source data.
+
+    Args:
+        src_adata (Anndata): source adata
+        tgt_adata (Anndata): target adata
+        g_basis (str): data to use
+    """
+    basis_dict = {"X": src_adata.X, 
+                  "S": src_adata.layers['spliced'], 
+                  "U": src_adata.layers['unspliced']
+                  }
+    new_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
+    scv.pp.moments(new_adata, n_pcs=30, n_neighbors=30)
+    return tgt_adata
+
     
 def new_adata(adata, x, s, u, v=None, 
-              copy_moments=True, 
               new_v_key="new_velocity", 
-              X_emb_key="X_umap"):
+              X_emb_key="X_umap",
+              g_basis="SU",
+             ):
     """Copy a new Anndata object while keeping some original information.
     
     Args:
@@ -226,13 +275,13 @@ def new_adata(adata, x, s, u, v=None,
         s (np.ndarray): new spliced mRNA expression.
         u (np.ndarray): new unspliced mRNA expression.
         v (np.ndarray): new velocity.
-        copy_moments (bool): whether to copy the moments.
         X_emb_key (str): key string of the embedding of X for visualization.
-    
+        g_basis (str): data for constructing neighborhood graph
     Returns:
         Anndata: a new Anndata object
     
     """
+    from sklearn.decomposition import PCA
     new_adata = anndata.AnnData(x)
     new_adata.layers['spliced'] = s
     new_adata.layers['unspliced'] = u
@@ -243,24 +292,55 @@ def new_adata(adata, x, s, u, v=None,
     
     for key in adata.obs:
         new_adata.obs[key] = adata.obs[key].copy()
-        
-    new_adata.obsm['X_pca'] = adata.obsm['X_pca'].copy()
-    new_adata.obsp['distances'] = adata.obsp['distances'].copy()
-    new_adata.obsp['connectivities'] = adata.obsp['connectivities'].copy()
     
-    if copy_moments:
-        new_adata.layers['Ms'] = adata.layers['Ms'].copy()
-        new_adata.layers['Mu'] = adata.layers['Mu'].copy()
+    new_adata = construct_nb_graph_for_tgt(adata, new_adata, g_basis)
         
     for clr in [key for key in adata.uns if key.split("_")[-1] == 'colors' ]:
         new_adata.uns[clr] = adata.uns[clr]
         
-    new_adata.uns['neighbors'] = adata.uns['neighbors'].copy()
     new_adata.obsm[X_emb_key] = adata.obsm[X_emb_key].copy()
     return new_adata
 
 
-def train_step_AE(Xs, model, optimizer):
+
+def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False):
+    """Conduct a train step.
+    
+    Args:
+        Xs (list[FloatTensor]): inputs for Autoencoder
+        model (nn.Module): Instance of Autoencoder class
+        optimizer (nn.optim.Optimizer): instance of pytorch Optimizer class
+        xyids (list of int): indices of x
+    
+    Returns:
+        float: loss of this step.
+        
+    """
+    optimizer.zero_grad()
+    loss = 0
+    for X in Xs:
+        loss += model(X)
+
+    ae_loss = loss.item()
+    lr_loss = 0
+    if xyids:
+        s, u = model.encoder(Xs[xyids[0]]), model.encoder(Xs[xyids[1]])
+        _, gamma, vloss = leastsq_pt(
+                              s, u,
+                              fit_offset=True, 
+                              perc=[5, 95],
+                              device=device)
+        vloss = torch.sum(vloss) * aux_weight
+        lr_loss = vloss.item()
+
+    loss += vloss 
+    loss.backward()
+    optimizer.step()
+    if rt_all_loss:
+        return loss.item(), ae_loss, lr_loss
+    return loss.item()
+
+def train_step_AE(Xs, model, optimizer, SV, xyids=[-2, -1], device=None, lreg_weight=3):
     """Conduct a train step.
     
     Args:
@@ -276,9 +356,21 @@ def train_step_AE(Xs, model, optimizer):
     loss = 0
     for X in Xs:
         loss += model(X)
+    ae_loss = loss.item()
+    s, u = model.encoder(Xs[xyids[0]]), model.encoder(Xs[xyids[1]])
+    _, gamma, vloss = leastsq_NxN(
+                              s, u,
+                              fit_offset=True, 
+                              perc=[5, 95],
+                              device=device)
+#     v = model.encoder(SV + Xs[xyids[0]])  - s
+#     vloss = torch.square((u - gamma * s) - v).sum()
+    vloss = torch.sum(vloss) * lreg_weight
+    loss += vloss
+    
     loss.backward()
     optimizer.step()
-    return loss.item()
+    return loss.item(), ae_loss, vloss.item()
 
 
 def sklearn_decompose(method, X, S, U, V):
@@ -411,9 +503,11 @@ def get_veloAE(
              n_genes, 
              n_cells, 
              h_dim, 
-             k_dim, 
+             k_dim,
              G_embeddings=None, 
              g_rep_dim=100,
+             gb_tau=1.0,
+             g_basis="SU",
              device=None):
     """Instantiate a VeloAE object.
     
@@ -428,12 +522,17 @@ def get_veloAE(
         g_rep_dim (int): dimensionality of gene representations.
             # Either G_rep or (n_genes, g_rep_dim) should be provided.
             # priority is given to G_rep.
+        gb_tau (float): temperature parameter for gumbel softmax
+        g_basis (str): specifies data source for constructing neighboring graph
         device (torch.device): torch device object.
     
     Returns:
         nn.Module: model instance
     """
     from .model import VeloAutoencoder
+    from sklearn.decomposition import PCA
+    adata = adata.copy()
+    adata = construct_nb_graph_for_tgt(adata, adata)
     conn = adata.obsp['connectivities']
     nb_indices = adata.uns['neighbors']['indices']
     xs, ys = np.repeat(range(n_cells), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
@@ -450,6 +549,7 @@ def get_veloAE(
                 k_dim=k_dim,
                 G_rep=G_embeddings,
                 g_rep_dim=g_rep_dim,
+                gb_tau=gb_tau,
                 device=device
                 )
     return model.to(device)
