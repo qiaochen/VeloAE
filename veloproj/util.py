@@ -287,8 +287,8 @@ def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU"):
                   "S": src_adata.layers['spliced'], 
                   "U": src_adata.layers['unspliced']
                   }
-    new_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
-    scv.pp.moments(new_adata, n_pcs=30, n_neighbors=30)
+    tgt_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
+    scv.pp.moments(tgt_adata, n_pcs=30, n_neighbors=30)
     return tgt_adata
 
     
