@@ -210,6 +210,7 @@ def do_projection(model,
                   tensor_s, 
                   tensor_u, 
                   tensor_v,
+                  color=None,
                   device=None
                  ):
     """Project everything into the low-dimensional space
@@ -242,14 +243,20 @@ def do_projection(model,
                         X_emb_key=args.vis_key,
                         g_basis=args.nb_g_src)
     scv.tl.velocity_graph(ld_adata, vkey='velocity')
-    scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
+    if color:
+        scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
+                                    title="Project Original Velocity into Low-Dim Space",
+                                    color=color
+                                    )
+    else:
+        scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
                                     title="Project Original Velocity into Low-Dim Space",
                                     save='un_colored_velo_projection.png'
                                     )
     return ld_adata
 
 
-def init_adata(args):
+def init_adata(args, adata=None):
     """Initialize Anndata object
     
     Args:
@@ -258,7 +265,8 @@ def init_adata(args):
     Returns:
         Anndata: preprocessed Anndata instance
     """
-    adata = sc.read(args.adata)
+    if adata is None:
+        adata = sc.read(args.adata)
     scv.utils.show_proportions(adata)
     scv.pp.filter_and_normalize(adata, min_shared_counts=30, n_top_genes=args.n_raw_gene)
     scv.pp.moments(adata, n_pcs=30, n_neighbors=30)

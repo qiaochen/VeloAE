@@ -67,13 +67,13 @@ def main():
         
     logger.info("Do projection...")
     ld_adata = do_projection(model,
-                              adata,
-                              args,
-                              tensor_x, 
-                              tensor_s, 
-                              tensor_u, 
-                              tensor_v,
-                              device=device)
+                             adata,
+                             args,
+                             tensor_x, 
+                             tensor_s, 
+                             tensor_u, 
+                             tensor_v,
+                             device=device)
     logger.info("Finished projection...")
     logger.info(f"{(timeit.default_timer() - start_time)/60:.2}min passed.")
     
