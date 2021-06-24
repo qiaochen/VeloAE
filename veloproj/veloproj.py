@@ -47,17 +47,14 @@ def main():
     logger.info("Finished model initialization...")
     logger.info(f"{timeit.default_timer() - start_time:.2}s passed.")
     
-    inputs = []
+    inputs = [tensor_s, tensor_u]
+    xyids = [0, 1]
     if args.use_x:
         inputs.append(tensor_x)
-    if args.use_s:
-        inputs.append(tensor_s)
-    if args.use_u:
-        inputs.append(tensor_u)        
     
     if args.refit == 1:
         logger.info("Fitting model...")
-        model = fit_model(args, adata, model, inputs)
+        model = fit_model(args, adata, model, inputs, xyids, device)
         logger.info("Finished model fitting.")
         logger.info(f"{(timeit.default_timer() - start_time)/60:.2}min passed.")
     else:
@@ -69,16 +66,17 @@ def main():
         model = model.to(device)
         
     logger.info("Do projection...")
-    new_adata = do_projection(model,
+    ld_adata = do_projection(model,
                               adata,
                               args,
                               tensor_x, 
                               tensor_s, 
                               tensor_u, 
-                              tensor_v)
+                              tensor_v,
+                              device=device)
     logger.info("Finished projection...")
     logger.info(f"{(timeit.default_timer() - start_time)/60:.2}min passed.")
     
-    new_adata.write(os.path.join(args.output, "projection.h5ad"))
+    ld_adata.write(os.path.join(args.output, "projection.h5ad"))
     logger.info(f'Low-dimensional results saved in {os.path.join(args.output, "projection.h5ad")}')
         
