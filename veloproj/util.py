@@ -103,6 +103,8 @@ def get_parser():
     parser.add_argument('--lr_decay', type=float, default=0.9,
                         help='Rate of learning rate decay when learning fluctuates: new lr = lr * lr_decay \
                              (default: 0.9)')
+    parser.add_argument('--ld_adata', type=str, default="projection.h5",
+                        help='Path of output low-dimensional adata (projection.h5)')
     return parser
 
 
@@ -288,6 +290,7 @@ def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU"):
                   "U": src_adata.layers['unspliced']
                   }
     tgt_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
+    scv.pp.neighbors(tgt_adata, n_pcs=30, n_neighbors=30)
     scv.pp.moments(tgt_adata, n_pcs=30, n_neighbors=30)
     return tgt_adata
 
@@ -534,7 +537,7 @@ def get_veloAE(
     """
     from .model import VeloAutoencoder
     adata = adata.copy()
-    adata = construct_nb_graph_for_tgt(adata, adata, g_basis)
+    adata = construct_nb_graph_for_tgt(adata, adata, g_basis.upper())
     conn = adata.obsp['connectivities']
     nb_indices = adata.uns['neighbors']['indices']
     xs, ys = np.repeat(range(n_cells), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()

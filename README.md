@@ -46,10 +46,12 @@ veloproj --refit 0 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad
 #### Fit a new veloAE model and project velocity into low-dimensional space.
 
 ```
-veloproj --lr 5e-6 --refit 1 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name dentategyrus_model.cpt
+veloproj --lr 1e-5 --nb_g_src X --gumbsoft_tau 8 --refit 1 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name dentategyrus_model.cpt
 ```
 - Arguments:
-    - --lr: learning rate, (should be tunned to minimize loss robustly)
+    - --lr: learning rate, (tunning it if the model does not learn given the default configuration)
+    - --nb_g_src: expression matrix for generating neighborhood graph of cells, can be 'X' (transcriptome), 'S' (spliced), and 'U' (unspliced)
+    - --gumbsoft_tau: temperature parameter of gumbel softmax function, a smaller value (e.g., 1) makes attention sparse and training more challenging, while a larger value (e.g., 10) makes attention more evenly distributed and loss more smoothly converge to lower value.
     - --refit: if 1, fit a new model
     - --adata: path to the Anndata with X_umap, transcriptom, spliced and unspliced mRNA expressions.
     - --device: gpu or cpu. Fitting using GPU is much faster than cpu.

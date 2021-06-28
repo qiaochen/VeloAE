@@ -77,6 +77,6 @@ def main():
     logger.info("Finished projection...")
     logger.info(f"{(timeit.default_timer() - start_time)/60:.2}min passed.")
     
-    ld_adata.write(os.path.join(args.output, "projection.h5ad"))
-    logger.info(f'Low-dimensional results saved in {os.path.join(args.output, "projection.h5ad")}')
+    ld_adata.write(os.path.join(args.output, args.ld_adata))
+    logger.info(f'Low-dimensional results saved in {os.path.join(args.output, args.ld_adata)}')
         
