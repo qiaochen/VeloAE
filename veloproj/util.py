@@ -247,12 +247,12 @@ def do_projection(model,
     scv.tl.velocity_graph(ld_adata, vkey='velocity')
     if color:
         scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
-                                    title="Project Original Velocity into Low-Dim Space",
+                                    title="Low-dimensional Celluar Transition Map",
                                     color=color
                                     )
     else:
         scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
-                                    title="Project Original Velocity into Low-Dim Space",
+                                    title="Low-dimensional Celluar Transition Map",
                                     save='un_colored_velo_projection.png'
                                     )
     return ld_adata
