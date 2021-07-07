@@ -94,10 +94,10 @@ def get_parser():
     parser.add_argument('--aux_weight', type=float, default=1.0,
                         help='specify the weight of auxiliary loss, i.e., linear regression (u = gamma * s ) on \
                             low-dimensional space (default: 1.0)')
-    parser.add_argument('--nb_g_src', type=str, default="XSU",
+    parser.add_argument('--nb_g_src', type=str, default="SU",
                         help='specify data used to construct neighborhood graph, "XSU" indicates using \
                              transpriptome, spliced and unspliced counts, "SU" indicates only the latter \
-                             two, "X" indicates only use the transcriptome (default: XSU)')
+                             two, "X" indicates only use the transcriptome (default: SU)')
     parser.add_argument('--n_raw_gene', type=int, default=2000,
                         help='Number of genes to keep in the raw gene space (default: 2000)')
     parser.add_argument('--lr_decay', type=float, default=0.9,
