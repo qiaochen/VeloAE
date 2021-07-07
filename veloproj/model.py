@@ -226,7 +226,6 @@ class AblationAttComb(nn.Module):
     
     """
     def __init__(self,
-               in_dim,
                z_dim,
                n_genes,
                n_cells,
@@ -256,13 +255,16 @@ class AblationAttComb(nn.Module):
         """
         super(AblationAttComb, self).__init__()
         self.device = device
-        self.encoder = AblationEncoder(in_dim, z_dim, h_dim=h_dim)
+        self.encoder = AblationEncoder(n_genes, z_dim, h_dim=h_dim)
+        self.trans_z = nn.Linear(z_dim, z_dim, bias=True)
         self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, gb_tau, device)
         self.criterion = nn.MSELoss(reduction='mean')
         
+        
     def forward(self, X):
         z = self.encoder(X)
-        X_hat = self.decoder(z)
+        gen_z = self.trans_z(z)
+        X_hat = self.decoder(z, gen_z, False)
         return self.criterion(X_hat, X)    
     
 
@@ -327,16 +329,17 @@ def get_mask_pt(x, y=None, perc=[5, 95], device=None):
     return:
         mask (Tensor): bool matrix
     """
-    xy_norm = torch.clone(x)
-    if y is not None:
-        y = torch.clone(y)
-        xy_norm = xy_norm / torch.clip(torch.max(xy_norm, axis=0).values - torch.min(xy_norm, axis=0).values, 1e-3, None)
-        xy_norm += y / torch.clip(torch.max(y, axis=0).values - torch.min(y, axis=0).values, 1e-3, None)
-    if isinstance(perc, int):
-        mask = xy_norm >= torch.quantile(xy_norm, perc/100, dim=0)
-    else:
-        lb, ub = torch.quantile(xy_norm, torch.Tensor(perc).to(device)/100, dim=0, keepdim=True)
-        mask = (xy_norm <= lb) | (xy_norm >= ub)
+    with torch.no_grad():
+        xy_norm = torch.clone(x)
+        if y is not None:
+            y = torch.clone(y)
+            xy_norm = xy_norm / torch.clip(torch.max(xy_norm, axis=0).values - torch.min(xy_norm, axis=0).values, 1e-3, None)
+            xy_norm += y / torch.clip(torch.max(y, axis=0).values - torch.min(y, axis=0).values, 1e-3, None)
+        if isinstance(perc, int):
+            mask = xy_norm >= torch.quantile(xy_norm, perc/100, dim=0)
+        else:
+            lb, ub = torch.quantile(xy_norm, torch.Tensor(perc).to(device)/100, dim=0, keepdim=True)
+            mask = (xy_norm <= lb) | (xy_norm >= ub)
     return mask
 
 def prod_sum_obs_pt(A, B):
@@ -348,7 +351,7 @@ def sum_obs_pt(A):
     return torch.einsum("ij -> j", A) if A.ndim > 1 else torch.sum(A)    
 
 def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False, 
-            perc=None, device=None):
+            perc=None, device=None, clamp=None):
     """Solves least squares X*b=Y for b. (adatpt from scVelo)
     
     Args:
@@ -358,26 +361,33 @@ def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False,
         constraint_positive_offset (bool): whether make non-negative offset
         perc (int or list of int): percentile threshold for points in regression
         device (torch.device): GPU/CPU device object
+        clamp (float): normalize and clamp x, y to [-clamp, clamp], for stable fitting in baseline AE
 
     returns:
         fitted offset, gamma and MSE losses
     """
+    if not clamp is None:
+        x = (x - torch.mean(x, dim=0)) / torch.std(x, dim=0)
+        y = (y - torch.mean(y, dim=0)) / torch.std(y, dim=0)
+        x = torch.clamp(x, min=-abs(clamp), max=abs(clamp))
+        y = torch.clamp(y, min=-abs(clamp), max=abs(clamp))
+        
     if perc is not None:
         if not fit_offset:
             perc = perc[1]
         mask = get_mask_pt(x, y, perc=perc, device=device)
-        x, y = x * mask, y * mask
     else:
         mask = None
 
     xx_ = prod_sum_obs_pt(x, x)
     xy_ = prod_sum_obs_pt(x, y)
     n_obs = x.shape[0] if mask is None else sum_obs_pt(mask)
-    
+
     if fit_offset:
         
         x_ = sum_obs_pt(x) / n_obs
         y_ = sum_obs_pt(y) / n_obs
+
         gamma = (xy_ / n_obs - x_ * y_) / (xx_ / n_obs - x_ ** 2)
         offset = y_ - gamma * x_
 
@@ -388,17 +398,30 @@ def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False,
                 gamma[idx] = xy_[idx] / xx_[idx]
             else:
                 gamma = xy_ / xx_
-            offset = torch.clip(offset, 0, None)
+            offset = torch.clamp(offset, 0, None)
     else:
         gamma = xy_ / xx_
         offset = torch.zeros(x.shape[1]).to(device) if x.ndim > 1 else 0
+    
+    # print("n_obs : ", torch.min(n_obs).item(), torch.max(n_obs).item())
+    # print("xx: ", torch.max(xx_).item())
+    # print("xy: ", torch.max(xy_).item())
+    # print("x_: ", torch.max(x_).item())
+    # print("y_: ", torch.max(y_).item())
+    # print("gamma, offset: ", torch.max(gamma).item(), torch.max(offset).item())
+    # print("gamma, offset: ", torch.isinf(gamma).sum().item(), torch.isinf(offset).sum().item())
+    # offset_isinf = torch.isinf(offset)
+    # print(f"inf gamma: {gamma[offset_isinf]}, xy_: {xy_[offset_isinf]}, xx_: {xx_[offset_isinf]}, x_: {x_[offset_isinf]}, y_: {y_[offset_isinf]},  ")
+    
     nans_offset, nans_gamma = torch.isnan(offset), torch.isnan(gamma)
     if torch.any(nans_offset) or torch.any(nans_gamma):
         offset[torch.isnan(offset)], gamma[torch.isnan(gamma)] = 0, 0
-        
+
     loss = torch.square(y - x * gamma.view(1,-1) - offset)
     if perc is not None:
         loss = loss * mask
     loss = sum_obs_pt(loss) / n_obs
+    # print(torch.max(loss).item(), torch.min(loss).item(), torch.mean(loss).item())
+    
     return offset, gamma, loss
 

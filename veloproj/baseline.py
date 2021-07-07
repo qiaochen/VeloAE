@@ -112,9 +112,9 @@ def get_mask_np(x, y=None, perc=[5, 95]):
         xy_norm = xy_norm / np.clip(np.max(xy_norm, axis=0, keepdims=True) - np.min(xy_norm, axis=0, keepdims=True), 1e-3, None)
         xy_norm += y / np.clip(np.max(y, axis=0, keepdims=True) - np.min(y, axis=0, keepdims=True), 1e-3, None)
     if isinstance(perc, int):
-        mask = xy_norm >= np.quantile(xy_norm, perc/100, dim=0)
+        mask = xy_norm >= np.quantile(xy_norm, perc/100, axis=0)
     else:
-        lb, ub = np.quantile(xy_norm, np.array(perc)/100, dim=0, keepdim=True)
+        lb, ub = np.quantile(xy_norm, np.array(perc)/100, axis=0, keepdims=True)
         mask = (xy_norm <= lb) | (xy_norm >= ub)
     return mask
 

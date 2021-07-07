@@ -96,8 +96,8 @@ def get_parser():
                             low-dimensional space (default: 1.0)')
     parser.add_argument('--nb_g_src', type=str, default="XSU",
                         help='specify data used to construct neighborhood graph, "XSU" indicates using \
-                             transpriptom, spliced and unspliced counts, "SU" indicates only the latter \
-                             two (default: XSU)')
+                             transpriptome, spliced and unspliced counts, "SU" indicates only the latter \
+                             two, "X" indicates only use the transcriptome (default: XSU)')
     parser.add_argument('--n_raw_gene', type=int, default=2000,
                         help='Number of genes to keep in the raw gene space (default: 2000)')
     parser.add_argument('--lr_decay', type=float, default=0.9,
@@ -153,7 +153,7 @@ def init_model(adata, args, device):
     return model
 
 
-def fit_model(args, adata, model, inputs, xyids=None, device=None):
+def fit_model(args, adata, model, inputs, xyids=None, device=None, std_lr=None):
     """Fit a velo autoencoder
     
     Args:
@@ -180,7 +180,9 @@ def fit_model(args, adata, model, inputs, xyids=None, device=None):
                 model, optimizer, 
                 xyids=xyids, 
                 aux_weight=args.aux_weight,
-                device=device)
+                device=device,
+                clamp=1 if std_lr else None
+                )
 
         losses.append(loss)
         if i % args.log_interval == 0:
@@ -334,7 +336,7 @@ def new_adata(adata, x, s, u, v=None,
     return new_adata
 
 
-def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False):
+def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False, clamp=None):
     """Conduct a train step.
     
     Args:
@@ -350,7 +352,7 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
     optimizer.zero_grad()
     loss = 0
     for X in Xs:
-        loss += model(X)
+        loss = loss + model(X)
 
     ae_loss = loss.item()
     lr_loss = 0
@@ -360,11 +362,12 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
                               s, u,
                               fit_offset=True, 
                               perc=[5, 95],
-                              device=device)
+                              device=device,
+                              clamp=clamp)
         vloss = torch.sum(vloss) * aux_weight
         lr_loss = vloss.item()
-
-    loss += vloss 
+        loss += vloss
+        
     loss.backward()
     optimizer.step()
     if rt_all_loss:
@@ -372,7 +375,7 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
     return loss.item()
 
 
-def sklearn_decompose(method, X, S, U, V):
+def sklearn_decompose(method, X, S, U, V, use_leastsq=True):
     """General interface using sklearn.decomposition.XXX method
     
     Args:
@@ -397,9 +400,12 @@ def sklearn_decompose(method, X, S, U, V):
     x = method.transform(X)
     s = method.transform(S)
     u = method.transform(U)
-    v = method.transform(S + V) - s
-    # _, gamma, loss = leastsq_np(s, u, fit_offset=True, perc=[5, 95])
-    # v = u - gamma.reshape(1, -1) * s
+    if use_leastsq:
+        _, gamma, loss = leastsq_np(s, u, fit_offset=True, perc=[5, 95])
+        v = u - gamma.reshape(1, -1) * s
+    else:
+        v = method.transform(S + V) - s
+    
     return x, s, u, v
     
     
@@ -426,17 +432,16 @@ def get_baseline_AE(in_dim, z_dim, h_dim):
 
 
 def get_ablation_CohAgg(
-                edge_index,
-                edge_weight,
+                adata,
                 in_dim,
                 z_dim,
                 h_dim,
-                device):
+                g_basis="SU",
+                device=None):
     """Get Ablation Cohort Aggregation instance
     
     Args:
-        edge_index (LongTensor): shape (2, ?), edge indices
-        edge_weight (FloatTensor): shape (?), edge weights.
+        adata (anndata): Anndata object
         in_dim (int): dimensionality of the input
         z_dim (int): dimensionality of the low-dimensional space
         h_dim (int): dimensionality of intermediate layers in MLP
@@ -446,6 +451,13 @@ def get_ablation_CohAgg(
         nn.Module: model instance
     """
     from .model import AblationCohAgg
+    adata = adata.copy()
+    adata = construct_nb_graph_for_tgt(adata, adata, g_basis.upper())
+    conn = adata.obsp['connectivities']
+    nb_indices = adata.uns['neighbors']['indices']
+    xs, ys = np.repeat(range(adata.n_obs), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
+    edge_weight = torch.FloatTensor(conn[xs,ys]).view(-1).to(device)
+    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), xs.reshape(1, -1)])).to(device)
     model = AblationCohAgg(
         edge_index,
         edge_weight,
@@ -458,7 +470,6 @@ def get_ablation_CohAgg(
 
 
 def get_ablation_attcomb(
-               in_dim,
                z_dim,
                n_genes,
                n_cells,
@@ -489,7 +500,6 @@ def get_ablation_attcomb(
     """
     from .model import AblationAttComb
     model = AblationAttComb(
-            in_dim,
             z_dim,
             n_genes,
             n_cells,

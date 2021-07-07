@@ -1,3 +1,5 @@
 {
-    "python.pythonPath": "/data/users/cqiao/anaconda3/envs/dev/bin/python"
+    "python.pythonPath": "/data/users/cqiao/anaconda3/envs/dev/bin/python",
+    "jupyter.jupyterServerType": "local",
+    "jupyter.allowUnauthorizedRemoteConnection": true
 }
