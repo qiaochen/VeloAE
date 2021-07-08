@@ -158,8 +158,10 @@ class AblationEncoder(nn.Module):
         super(AblationEncoder, self).__init__()
         self.fn = nn.Sequential(
             nn.Linear(in_dim, h_dim, bias=True),
+            nn.BatchNorm1d(h_dim),
             nn.GELU(),
             nn.Linear(h_dim, z_dim, bias=True),
+            nn.BatchNorm1d(z_dim),
             nn.GELU(),
         )
                 
