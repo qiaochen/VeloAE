@@ -237,7 +237,7 @@ def inner_cluster_coh(adata, k_cluster, k_velocity, return_raw=False):
     return scores, np.mean([sc for sc in scores.values()])
 
 
-def evaluate(adata, cluster_edges, k_cluster, k_velocity, x_emb="X_umap", verbose=True):
+def evaluate(adata, cluster_edges, k_cluster, k_velocity, x_emb="X_umap"):
     """Evaluate velocity estimation results using 5 metrics.
     
     Args:
@@ -258,12 +258,11 @@ def evaluate(adata, cluster_edges, k_cluster, k_velocity, x_emb="X_umap", verbos
     ic_coh = inner_cluster_coh(adata, k_cluster, k_velocity, True)
     ic_scvelo_coh = in_cluster_scvelo_coh(adata, k_cluster, "{}_confidence".format(k_velocity), True)
     
-    if verbose:
-        print("# Cross-Boundary Transition Score (A->B)\n{}\nTotal Mean: {}".format(*summary_scores(trans_probs)))
-        print("# Cross-Boundary Velocity Coherence (A->B)\n{}\nTotal Mean: {}".format(*summary_scores(crs_bdr_coh)))
-        print("# Cross-Boundary Direction Correctness (A->B)\n{}\nTotal Mean: {}".format(*summary_scores(crs_bdr_crc)))
-        print("# In-cluster Coherence\n{}\nTotal Mean: {}".format(*summary_scores(ic_coh)))
-        print("# In-cluster Confidence\n{}\nTotal Mean: {}".format(*summary_scores(ic_scvelo_coh)))
+    print("# Cross-Boundary Transition Score (A->B)\n{}\nTotal Mean: {}".format(*summary_scores(trans_probs)))
+    print("# Cross-Boundary Velocity Coherence (A->B)\n{}\nTotal Mean: {}".format(*summary_scores(crs_bdr_coh)))
+    print("# Cross-Boundary Direction Correctness (A->B)\n{}\nTotal Mean: {}".format(*summary_scores(crs_bdr_crc)))
+    print("# In-cluster Coherence\n{}\nTotal Mean: {}".format(*summary_scores(ic_coh)))
+    print("# In-cluster Confidence\n{}\nTotal Mean: {}".format(*summary_scores(ic_scvelo_coh)))
     
     return {
         "Cross-Boundary Transition Score (A->B)": trans_probs,
