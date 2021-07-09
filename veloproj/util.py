@@ -4,6 +4,7 @@
 This module contains util functions.
 
 """
+
 import torch
 import numpy as np
 import os, sys
@@ -13,71 +14,9 @@ import scanpy as sc
 import argparse
 
 from matplotlib import pyplot as plt
-
-
-def get_weight(x, y=None, perc=95, device=None):
-    xy_norm = torch.clone(x)
-    if y is not None:
-        y = torch.clone(y)
-        xy_norm = xy_norm / torch.clip(torch.max(xy_norm, axis=0).values - torch.min(xy_norm, axis=0).values, 1e-3, None)
-        xy_norm += y / torch.clip(torch.max(y, axis=0).values - torch.min(y, axis=0).values, 1e-3, None)
-    if isinstance(perc, int):
-        weights = xy_norm >= torch.quantile(xy_norm, perc/100, dim=0, keepdim=True)
-    else:
-        lb, ub = torch.quantile(xy_norm, torch.Tensor(perc).to(device)/100, dim=0, keepdim=True)
-        weights = (xy_norm <= lb) | (xy_norm >= ub)
-    return weights
-
-def prod_sum_obs(A, B):
-    """dot product and sum over axis 0 (obs) equivalent to np.sum(A * B, 0)"""
-    return torch.einsum("ij, ij -> j", A, B) if A.ndim > 1 else (A * B).sum()
-    
-def sum_obs(A):
-    """summation over axis 0 (obs) equivalent to np.sum(A, 0)"""
-    return torch.einsum("ij -> j", A) if A.ndim > 1 else torch.sum(A)    
-
-def leastsq_NxN(x, y, fit_offset=False, perc=None, constraint_positive_offset=False, device=None):
-    """Solves least squares X*b=Y for b."""
-    if perc is not None:
-        if not fit_offset:
-            perc = perc[1]
-        weights = get_weight(x, y, perc=perc, device=device)
-        x, y = x * weights, y * weights
-    else:
-        weights = None
-
-
-    xx_ = prod_sum_obs(x, x)
-    xy_ = prod_sum_obs(x, y)
-    n_obs = x.shape[0] if weights is None else sum_obs(weights)
-    
-    if fit_offset:
-        
-        x_ = sum_obs(x) / n_obs
-        y_ = sum_obs(y) / n_obs
-        gamma = (xy_ / n_obs - x_ * y_) / (xx_ / n_obs - x_ ** 2)
-        offset = y_ - gamma * x_
-
-        # fix negative offsets:
-        if constraint_positive_offset:
-            idx = offset < 0
-            if gamma.ndim > 0:
-                gamma[idx] = xy_[idx] / xx_[idx]
-            else:
-                gamma = xy_ / xx_
-            offset = torch.clip(offset, 0, None)
-    else:
-        gamma = xy_ / xx_
-        offset = torch.zeros(x.shape[1]).to(device) if x.ndim > 1 else 0
-    nans_offset, nans_gamma = torch.isnan(offset), torch.isnan(gamma)
-    if torch.any(nans_offset) or torch.any(nans_gamma):
-        offset[torch.isnan(offset)], gamma[torch.isnan(gamma)] = 0, 0
-        
-    loss = torch.square(y - x * gamma.view(1,-1) - offset)
-    if perc is not None:
-        loss = loss * weights
-    loss = sum_obs(loss) / n_obs
-    return offset, gamma, loss
+from sklearn.decomposition import PCA
+from .model import leastsq_pt
+from .baseline import leastsq_np
 
 
 def get_parser():
@@ -103,18 +42,18 @@ def get_parser():
                                 mRNA expressions, the adata should be already preprocessed and with
                                 velocity estimated in the original space."""
                        )
-    parser.add_argument('--use_x', type=bool, default=True,
+    parser.add_argument('--use_x', type=bool, default=False,
                         help="""whether or not to enroll transcriptom reads for training 
-                                (default: True)."""
+                                (default: False)."""
                        )
-    parser.add_argument('--use_s', type=bool, default=True,
-                        help="""whether or not to enroll spliced mRNA reads for training 
-                                (default: True)."""
-                       )
-    parser.add_argument('--use_u', type=bool, default=True,
-                        help="""whether or not to enroll unspliced mRNA reads for training 
-                                (default: True)."""
-                       )
+    # parser.add_argument('--use_s', type=bool, default=True,
+    #                     help="""whether or not to enroll spliced mRNA reads for training 
+    #                             (default: True)."""
+    #                    )
+    # parser.add_argument('--use_u', type=bool, default=True,
+    #                     help="""whether or not to enroll unspliced mRNA reads for training 
+    #                             (default: True)."""
+    #                    )
     parser.add_argument('--refit', type=int, default=1,
                         help="""whether or not refitting veloAE, if False, need to provide
                                 a fitted model for velocity projection. (default=1)
@@ -148,8 +87,42 @@ def get_parser():
                         help='how frequntly logging training status (default: 100)')
     parser.add_argument('--device', type=str, default="cpu",
                         help='specify device: e.g., cuda:0, cpu (default: cpu)')
+    parser.add_argument('--gumbsoft_tau', type=float, default=1.0,
+                        help='specify the temperature parameter of gumbel softmax, a small number (e.g., 1.0) \
+                         makes attention distribution sparse, while a large number (e.g., 10) makes attention \
+                              evenly distributed (default: 1.0)')
+    parser.add_argument('--aux_weight', type=float, default=1.0,
+                        help='specify the weight of auxiliary loss, i.e., linear regression (u = gamma * s ) on \
+                            low-dimensional space (default: 1.0)')
+    parser.add_argument('--nb_g_src', type=str, default="SU",
+                        help='specify data used to construct neighborhood graph, "XSU" indicates using \
+                             transpriptome, spliced and unspliced counts, "SU" indicates only the latter \
+                             two, "X" indicates only use the transcriptome (default: SU)')
+    parser.add_argument('--n_raw_gene', type=int, default=2000,
+                        help='Number of genes to keep in the raw gene space (default: 2000)')
+    parser.add_argument('--lr_decay', type=float, default=0.9,
+                        help='Rate of learning rate decay when learning fluctuates: new lr = lr * lr_decay \
+                             (default: 0.9)')
+    parser.add_argument('--ld_adata', type=str, default="projection.h5",
+                        help='Path of output low-dimensional adata (projection.h5)')
     return parser
 
+
+def get_G_emb(adata, g_rep_dim):
+    """Get low-dim representations for genes using PCA
+
+    Args:
+        adata (Anndata): Anndata object with Ms, Mu computed
+        g_rep_dim (int): dimensionality of low-dim gene representations
+    """
+    mts = np.hstack([
+        adata.X.toarray().T, 
+        adata.layers['Ms'].T, 
+        adata.layers['Mu'].T
+    ])
+    G_rep = PCA(n_components=g_rep_dim).fit_transform(mts)
+    return G_rep
+  
 
 def init_model(adata, args, device):
     """Initialize a model
@@ -162,9 +135,8 @@ def init_model(adata, args, device):
     Returns:
         nn.Module: model instance
     """
-    from sklearn.decomposition import PCA
     n_cells, n_genes = adata.X.shape
-    G_embeddings = PCA(n_components=args.g_rep_dim).fit_transform(adata.X.T.toarray())
+    G_embeddings = get_G_emb(adata, args.g_rep_dim)
     model = get_veloAE(
                      adata, 
                      args.z_dim, 
@@ -174,12 +146,14 @@ def init_model(adata, args, device):
                      args.k_dim, 
                      G_embeddings=G_embeddings, 
                      g_rep_dim=args.g_rep_dim,
+                     gb_tau=args.gumbsoft_tau,
+                     g_basis=args.nb_g_src,
                      device=device
                     )
     return model
 
 
-def fit_model(args, adata, model, inputs):
+def fit_model(args, adata, model, inputs, xyids=None, device=None):
     """Fit a velo autoencoder
     
     Args:
@@ -194,20 +168,42 @@ def fit_model(args, adata, model, inputs):
     optimizer = torch.optim.AdamW(model.parameters(), 
                                   lr=args.lr, 
                                   weight_decay=args.weight_decay)
-    
+    lr = args.lr  
+    i, losses = 0, [sys.maxsize]  
+    min_loss = losses[-1]
+    model_saved = False
+
     model.train()
-    i, losses = 0, [sys.maxsize]
     while i < args.n_epochs:
         i += 1
-        loss = train_step_AE(inputs, model, optimizer)                
+        loss = train_step_AE(inputs, 
+                model, optimizer, 
+                xyids=xyids, 
+                aux_weight=args.aux_weight,
+                device=device
+                )
+
         losses.append(loss)
         if i % args.log_interval == 0:
+            if losses[-1] < min_loss:
+                min_loss = losses[-1]
+                torch.save(model.state_dict(), args.model_name)
+                model_saved = True
+            else:
+                if model_saved:
+                    model.load_state_dict(torch.load(args.model_name))
+                    model = model.to(device)
+                lr *= args.lr_decay
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = lr
+
             print("Train Epoch: {:2d}/{:2d} \tLoss: {:.6f}"
                   .format(i, args.n_epochs, losses[-1]))
 
     plt.plot(losses[1:])
     plt.savefig(os.path.join(args.output, "training_loss.png"))
-    torch.save(model.state_dict(), os.path.join(args.output, args.model_name))
+    if losses[-1] < min_loss:
+        torch.save(model.state_dict(), os.path.join(args.output, args.model_name))
     return model
 
 def do_projection(model, 
@@ -216,7 +212,9 @@ def do_projection(model,
                   tensor_x, 
                   tensor_s, 
                   tensor_u, 
-                  tensor_v
+                  tensor_v,
+                  color=None,
+                  device=None
                  ):
     """Project everything into the low-dimensional space
     
@@ -233,36 +231,35 @@ def do_projection(model,
         Anndata: Anndata object in the latent space.
     
     """
-    x = model.encoder(tensor_x).detach().cpu().numpy()
-    s = model.encoder(tensor_s).detach().cpu().numpy()
-    u = model.encoder(tensor_u).detach().cpu().numpy()
-    v = model.encoder(tensor_s + tensor_v).detach().cpu().numpy() - s
-    
-    new_adata = anndata.AnnData(x)
-    new_adata.layers['spliced'] = s
-    new_adata.layers['unspliced'] = u
-    new_adata.layers['velocity'] = v
-    new_adata.obs.index = adata.obs.index.copy()
-    
-    for key in adata.obs:
-        new_adata.obs[key] = adata.obs[key].copy()
-    for key in adata.obsm:
-        new_adata.obsm[key] = adata.obsm[key].copy()
-    for key in adata.obsp:
-        new_adata.obsp[key] = adata.obsp[key].copy()
-    for clr in [key for key in adata.uns if key.split("_")[-1] == 'colors' ]:
-        new_adata.uns[clr] = adata.uns[clr]
-    
-    scv.pp.moments(new_adata, n_pcs=30, n_neighbors=30)
-    scv.tl.velocity_graph(new_adata, vkey='velocity')
-    scv.pl.velocity_embedding_stream(new_adata, vkey="velocity", basis=args.vis_key,
-                                    title="Project Original Velocity into Low-Dim Space",
+    model.eval()
+    with torch.no_grad():
+        x = model.encoder(tensor_x)
+        s = model.encoder(tensor_s)
+        u = model.encoder(tensor_u)
+        _, gamma, _ = leastsq_pt(s, u, device=device, fit_offset=True, perc=[5, 95])
+        v = (u - gamma.view(1, -1) * s).cpu().numpy()
+        x = x.cpu().numpy()
+        s = s.cpu().numpy()
+        u = u.cpu().numpy()
+
+    ld_adata = new_adata(adata, x, s, u, v, new_v_key="velocity", 
+                        X_emb_key=args.vis_key,
+                        g_basis=args.nb_g_src)
+    scv.tl.velocity_graph(ld_adata, vkey='velocity')
+    if color:
+        scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
+                                    title="Low-dimensional Celluar Transition Map",
+                                    color=color
+                                    )
+    else:
+        scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
+                                    title="Low-dimensional Celluar Transition Map",
                                     save='un_colored_velo_projection.png'
                                     )
-    return new_adata
+    return ld_adata
 
 
-def init_adata(args):
+def init_adata(args, adata=None):
     """Initialize Anndata object
     
     Args:
@@ -271,16 +268,35 @@ def init_adata(args):
     Returns:
         Anndata: preprocessed Anndata instance
     """
-    adata = sc.read(args.adata)
+    if adata is None:
+        adata = sc.read(args.adata)
     scv.utils.show_proportions(adata)
-    scv.pp.filter_and_normalize(adata, min_shared_counts=30, n_top_genes=2000)
+    scv.pp.filter_and_normalize(adata, min_shared_counts=30, n_top_genes=args.n_raw_gene)
     scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
     scv.tl.velocity(adata, vkey='stc_velocity', mode="stochastic")
     return adata
 
+
+def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU"):
+    """Construct neighborhood graph for target adata using expression data 
+    from source data.
+
+    Args:
+        src_adata (Anndata): source adata
+        tgt_adata (Anndata): target adata
+        g_basis (str): data to use
+    """
+    basis_dict = {"X": src_adata.X, 
+                  "S": src_adata.layers['spliced'], 
+                  "U": src_adata.layers['unspliced']
+                  }
+    tgt_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
+    scv.pp.neighbors(tgt_adata, n_pcs=30, n_neighbors=30)
+    scv.pp.moments(tgt_adata, n_pcs=30, n_neighbors=30)
+    return tgt_adata
+
     
 def new_adata(adata, x, s, u, v=None, 
-              copy_moments=True, 
               new_v_key="new_velocity", 
               X_emb_key="X_umap",
               g_basis="SU",
@@ -293,14 +309,12 @@ def new_adata(adata, x, s, u, v=None,
         s (np.ndarray): new spliced mRNA expression.
         u (np.ndarray): new unspliced mRNA expression.
         v (np.ndarray): new velocity.
-        copy_moments (bool): whether to copy the moments.
         X_emb_key (str): key string of the embedding of X for visualization.
-    
+        g_basis (str): data for constructing neighborhood graph
     Returns:
         Anndata: a new Anndata object
     
     """
-    from sklearn.decomposition import PCA
     new_adata = anndata.AnnData(x)
     new_adata.layers['spliced'] = s
     new_adata.layers['unspliced'] = u
@@ -312,25 +326,23 @@ def new_adata(adata, x, s, u, v=None,
     for key in adata.obs:
         new_adata.obs[key] = adata.obs[key].copy()
     
-    basis_dict = {"X":adata.X, "S":adata.layers['spliced'], "U":adata.layers['unspliced']}
-    new_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
-    scv.pp.moments(new_adata, n_pcs=30, n_neighbors=30)
+    new_adata = construct_nb_graph_for_tgt(adata, new_adata, g_basis)
         
     for clr in [key for key in adata.uns if key.split("_")[-1] == 'colors' ]:
         new_adata.uns[clr] = adata.uns[clr]
         
-#     new_adata.uns['neighbors'] = adata.uns['neighbors'].copy()
     new_adata.obsm[X_emb_key] = adata.obsm[X_emb_key].copy()
     return new_adata
 
 
-def train_step_AE(Xs, model, optimizer, SV, xyids=[-2, -1], device=None, lreg_weight=3):
+def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False):
     """Conduct a train step.
     
     Args:
         Xs (list[FloatTensor]): inputs for Autoencoder
         model (nn.Module): Instance of Autoencoder class
         optimizer (nn.optim.Optimizer): instance of pytorch Optimizer class
+        xyids (list of int): indices of x
     
     Returns:
         float: loss of this step.
@@ -339,25 +351,30 @@ def train_step_AE(Xs, model, optimizer, SV, xyids=[-2, -1], device=None, lreg_we
     optimizer.zero_grad()
     loss = 0
     for X in Xs:
-        loss += model(X)
+        loss = loss + model(X)
+
     ae_loss = loss.item()
-    s, u = model.encoder(Xs[xyids[0]]), model.encoder(Xs[xyids[1]])
-    _, gamma, vloss = leastsq_NxN(
+    lr_loss = 0
+    if xyids:
+        s, u = model.encoder(Xs[xyids[0]]), model.encoder(Xs[xyids[1]])
+        _, _, vloss = leastsq_pt(
                               s, u,
                               fit_offset=True, 
                               perc=[5, 95],
-                              device=device)
-#     v = model.encoder(SV + Xs[xyids[0]])  - s
-#     vloss = torch.square((u - gamma * s) - v).sum()
-    vloss = torch.sum(vloss) * lreg_weight
-    loss += vloss
-    
+                              device=device,
+                              )
+        vloss = torch.sum(vloss) * aux_weight
+        lr_loss = vloss.item()
+        loss += vloss
+        
     loss.backward()
     optimizer.step()
-    return loss.item(), ae_loss, vloss.item()
+    if rt_all_loss:
+        return loss.item(), ae_loss, lr_loss
+    return loss.item()
 
 
-def sklearn_decompose(method, X, S, U, V):
+def sklearn_decompose(method, X, S, U, V, use_leastsq=True):
     """General interface using sklearn.decomposition.XXX method
     
     Args:
@@ -382,7 +399,12 @@ def sklearn_decompose(method, X, S, U, V):
     x = method.transform(X)
     s = method.transform(S)
     u = method.transform(U)
-    v = method.transform(S + V) - s
+    if use_leastsq:
+        _, gamma, loss = leastsq_np(s, u, fit_offset=True, perc=[5, 95])
+        v = u - gamma.reshape(1, -1) * s
+    else:
+        v = method.transform(S + V) - s
+    
     return x, s, u, v
     
     
@@ -409,17 +431,16 @@ def get_baseline_AE(in_dim, z_dim, h_dim):
 
 
 def get_ablation_CohAgg(
-                edge_index,
-                edge_weight,
+                adata,
                 in_dim,
                 z_dim,
                 h_dim,
-                device):
+                g_basis="SU",
+                device=None):
     """Get Ablation Cohort Aggregation instance
     
     Args:
-        edge_index (LongTensor): shape (2, ?), edge indices
-        edge_weight (FloatTensor): shape (?), edge weights.
+        adata (anndata): Anndata object
         in_dim (int): dimensionality of the input
         z_dim (int): dimensionality of the low-dimensional space
         h_dim (int): dimensionality of intermediate layers in MLP
@@ -429,6 +450,13 @@ def get_ablation_CohAgg(
         nn.Module: model instance
     """
     from .model import AblationCohAgg
+    adata = adata.copy()
+    adata = construct_nb_graph_for_tgt(adata, adata, g_basis.upper())
+    conn = adata.obsp['connectivities']
+    nb_indices = adata.uns['neighbors']['indices']
+    xs, ys = np.repeat(range(adata.n_obs), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
+    edge_weight = torch.FloatTensor(conn[xs,ys]).view(-1).to(device)
+    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), xs.reshape(1, -1)])).to(device)
     model = AblationCohAgg(
         edge_index,
         edge_weight,
@@ -441,17 +469,19 @@ def get_ablation_CohAgg(
 
 
 def get_ablation_attcomb(
-                        z_dim,
-                        n_genes,
-                        n_cells,
-                        h_dim,
-                        k_dim,
-                        G_rep,
-                        g_rep_dim,
-                        device):
+               z_dim,
+               n_genes,
+               n_cells,
+               h_dim=256,
+               k_dim=100,
+               G_rep=None,
+               g_rep_dim=None,
+               gb_tau=1.0,
+               device=None):
     """Instantiate an AttenComb configuration for ablation study.
     
     Args:
+        in_dim (int): dimensionality of input space
         z_dim (int): dimensionality of the low-dimensional space
         n_genes (int): number of genes
         n_cells (int): number of cells
@@ -461,6 +491,7 @@ def get_ablation_attcomb(
         g_rep_dim (int): dimensionality of gene representations.
             # Either G_rep or (n_genes, g_rep_dim) should be provided.
             # priority is given to G_rep.
+        gb_tau (float): temperature parameter of gumbel softmax.
         device (torch.device): torch device object.
     
     Returns:
@@ -468,15 +499,15 @@ def get_ablation_attcomb(
     """
     from .model import AblationAttComb
     model = AblationAttComb(
-        n_genes,
-        z_dim,
-        n_genes,
-        n_cells,
-        h_dim,
-        k_dim,
-        G_rep,
-        g_rep_dim,
-        device
+            z_dim,
+            n_genes,
+            n_cells,
+            h_dim,
+            k_dim,
+            G_rep,
+            g_rep_dim,
+            gb_tau,
+            device
     )
     return model.to(device)
 
@@ -506,18 +537,16 @@ def get_veloAE(
         g_rep_dim (int): dimensionality of gene representations.
             # Either G_rep or (n_genes, g_rep_dim) should be provided.
             # priority is given to G_rep.
+        gb_tau (float): temperature parameter for gumbel softmax
+        g_basis (str): specifies data source for constructing neighboring graph
         device (torch.device): torch device object.
     
     Returns:
         nn.Module: model instance
     """
     from .model import VeloAutoencoder
-    from sklearn.decomposition import PCA
     adata = adata.copy()
-    basis_dict = {"X":adata.X, "S":adata.layers['spliced'], "U":adata.layers['unspliced']}
-    # more informative neighborhood construction
-    adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
-    scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
+    adata = construct_nb_graph_for_tgt(adata, adata, g_basis.upper())
     conn = adata.obsp['connectivities']
     nb_indices = adata.uns['neighbors']['indices']
     xs, ys = np.repeat(range(n_cells), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
