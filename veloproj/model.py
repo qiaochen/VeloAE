@@ -37,16 +37,18 @@ class Encoder(nn.Module):
         self.edge_weight = edge_weight
         self.fn = nn.Sequential(
             nn.Linear(in_dim, h_dim, bias=True),
-            # nn.BatchNorm1d(h_dim),
+            nn.BatchNorm1d(h_dim),
             nn.GELU(),
             nn.Linear(h_dim, h_dim, bias=True),
-            # nn.BatchNorm1d(h_dim),
+            nn.BatchNorm1d(h_dim),
             nn.GELU(),
         )
         self.gc = Sequential( "x, edge_index, edge_weight", 
             [(GCNConv(h_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
+              nn.BatchNorm1d(z_dim),
               nn.GELU(),
              (GCNConv(z_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
+              nn.BatchNorm1d(z_dim),
               nn.GELU(),
               nn.Linear(z_dim, z_dim)]
         )
@@ -160,10 +162,10 @@ class AblationEncoder(nn.Module):
         super(AblationEncoder, self).__init__()
         self.fn = nn.Sequential(
             nn.Linear(in_dim, h_dim, bias=True),
-            # nn.BatchNorm1d(h_dim),
+            nn.BatchNorm1d(h_dim),
             nn.GELU(),
             nn.Linear(h_dim, z_dim, bias=True),
-            # nn.BatchNorm1d(z_dim),
+            nn.BatchNorm1d(z_dim),
             nn.GELU(),
         )
                 
@@ -355,7 +357,7 @@ def sum_obs_pt(A):
     return torch.einsum("ij -> j", A) if A.ndim > 1 else torch.sum(A)    
 
 def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False, 
-            perc=None, device=None, clamp=None):
+            perc=None, device=None):
     """Solves least squares X*b=Y for b. (adatpt from scVelo)
     
     Args:
@@ -365,7 +367,6 @@ def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False,
         constraint_positive_offset (bool): whether make non-negative offset
         perc (int or list of int): percentile threshold for points in regression
         device (torch.device): GPU/CPU device object
-        clamp (float): normalize and clamp x, y to [-clamp, clamp], for stable fitting in baseline AE
 
     returns:
         fitted offset, gamma and MSE losses
