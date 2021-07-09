@@ -29,9 +29,11 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.fn = nn.Sequential(
             nn.Linear(in_dim, h_dim, bias=True),
+            # nn.BatchNorm1d(h_dim),
             nn.GELU(),
             nn.Linear(h_dim, z_dim, bias=True),
-            nn.GELU(),
+            # nn.BatchNorm1d(z_dim),
+            nn.GELU(),            
         )
         
     def forward(self, x):
