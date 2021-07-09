@@ -5,11 +5,10 @@ This module contains the veloAutoencoder and its ablation configurations.
 
 """
 import torch
-import numpy as np
-
 from torch import nn
 from torch_geometric.nn import GCNConv, Sequential
 from torch.nn import functional as F
+import numpy as np
 
 
 class Encoder(nn.Module):
@@ -84,7 +83,6 @@ class Decoder(nn.Module):
                 # priority is given to G_rep.
             k_dim (int): dimensionality of keys for attention computation.
             h_dim (int): dimensionality of intermediate layers of MLP.
-            gb_tau (float): temperature param of gumbel softmax
             device (torch.device): torch device object.
             
         """
@@ -128,13 +126,12 @@ class Attention(nn.Module):
         super(Attention, self).__init__()
         self.gb_tau = gb_tau
     
-    def forward(self, query, key, value, device=None):
+    def forward(self, query, key, value, k=3, device=None):
         """
         Args:
             query (torch.FloatTensor): query vectors identifying the gene profiles to be reconstructed.
             key (torch.FloatTensor): key vectors identifying the latent profiles to be attended to.
-            value (torch.FloatTensor): Z.
-            device (torch.device): torch device object.
+            value (torch.FloatTensor): Z
             
         Returns:
             FloatTensor: shape (n_genes, n_cells), reconstructed input
@@ -143,6 +140,7 @@ class Attention(nn.Module):
         d_k = query.size(-1)
         scores = torch.matmul(query, key.transpose(-2, -1)) / np.sqrt(d_k)
         p_attn = F.gumbel_softmax(scores, tau=self.gb_tau, hard=False, dim=-1)
+#             p_attn = torch.softmax(scores, dim=-1)
         return torch.matmul(p_attn, value), p_attn
 
     
@@ -158,8 +156,10 @@ class AblationEncoder(nn.Module):
         super(AblationEncoder, self).__init__()
         self.fn = nn.Sequential(
             nn.Linear(in_dim, h_dim, bias=True),
+            # nn.BatchNorm1d(h_dim),
             nn.GELU(),
             nn.Linear(h_dim, z_dim, bias=True),
+            # nn.BatchNorm1d(z_dim),
             nn.GELU(),
         )
                 
@@ -226,6 +226,7 @@ class AblationAttComb(nn.Module):
     
     """
     def __init__(self,
+               in_dim,
                z_dim,
                n_genes,
                n_cells,
@@ -233,7 +234,6 @@ class AblationAttComb(nn.Module):
                k_dim=100,
                G_rep=None,
                g_rep_dim=None,
-               gb_tau=1.0,
                device=None
               ):
         """
@@ -249,22 +249,18 @@ class AblationAttComb(nn.Module):
             g_rep_dim (int): dimensionality of gene representations.
                 # Either G_rep or (n_genes, g_rep_dim) should be provided.
                 # priority is given to G_rep.
-            gb_tau (float): temperature parameter for gumbel softmax,
             device (torch.device): torch device object.
             
         """
         super(AblationAttComb, self).__init__()
         self.device = device
-        self.encoder = AblationEncoder(n_genes, z_dim, h_dim=h_dim)
-        self.trans_z = nn.Linear(z_dim, z_dim, bias=True)
-        self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, gb_tau, device)
+        self.encoder = AblationEncoder(in_dim, z_dim, h_dim=h_dim)
+        self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, device)
         self.criterion = nn.MSELoss(reduction='mean')
-        
         
     def forward(self, X):
         z = self.encoder(X)
-        gen_z = self.trans_z(z)
-        X_hat = self.decoder(z, gen_z, False)
+        X_hat = self.decoder(z)
         return self.criterion(X_hat, X)    
     
 
@@ -302,7 +298,6 @@ class VeloAutoencoder(nn.Module):
             g_rep_dim (int): dimensionality of gene representations.
                 # Either G_rep or (n_genes, g_rep_dim) should be provided.
                 # priority is given to G_rep.
-            gb_tau (float): temperature parameter for gumbel softmax,
             device (torch.device): torch device object.
             
         """
@@ -316,6 +311,7 @@ class VeloAutoencoder(nn.Module):
         gen_z, raw_z = self.encoder(X, True)
         X_hat = self.decoder(raw_z, gen_z, False)
         return self.criterion(X_hat, X)
+<<<<<<< HEAD
 
 
 def get_mask_pt(x, y=None, perc=[5, 95], device=None):
@@ -407,3 +403,5 @@ def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False,
     loss = sum_obs_pt(loss) / n_obs
     return offset, gamma, loss
 
+=======
+>>>>>>> 814d3f46f82ae132ab54f857e079a0c7308724df
