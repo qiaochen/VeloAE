@@ -37,18 +37,18 @@ class Encoder(nn.Module):
         self.edge_weight = edge_weight
         self.fn = nn.Sequential(
             nn.Linear(in_dim, h_dim, bias=True),
-            nn.BatchNorm1d(h_dim),
+            # nn.BatchNorm1d(h_dim),
             nn.GELU(),
             nn.Linear(h_dim, h_dim, bias=True),
-            nn.BatchNorm1d(h_dim),
+            # nn.BatchNorm1d(h_dim),
             nn.GELU(),
         )
         self.gc = Sequential( "x, edge_index, edge_weight", 
             [(GCNConv(h_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
-              nn.BatchNorm1d(z_dim),
+            #   nn.BatchNorm1d(z_dim),
               nn.GELU(),
              (GCNConv(z_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
-              nn.BatchNorm1d(z_dim),
+            #   nn.BatchNorm1d(z_dim),
               nn.GELU(),
               nn.Linear(z_dim, z_dim)]
         )
