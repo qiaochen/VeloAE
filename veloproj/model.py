@@ -155,15 +155,26 @@ class AblationEncoder(nn.Module):
     def __init__(self, 
                  in_dim, 
                  z_dim,
-                 h_dim=256
+                 h_dim=256,
+                 batchnorm=False
                 ):
         super(AblationEncoder, self).__init__()
-        self.fn = nn.Sequential(
-            nn.Linear(in_dim, h_dim, bias=True),
-            nn.GELU(),
-            nn.Linear(h_dim, z_dim, bias=True),
-            nn.GELU(),
-        )
+        if batchnorm:
+            self.fn = nn.Sequential(
+                nn.Linear(in_dim, h_dim, bias=True),
+                nn.BatchNorm1d(h_dim),
+                nn.GELU(),
+                nn.Linear(h_dim, z_dim, bias=True),
+                nn.BatchNorm1d(z_dim),
+                nn.GELU(),
+            )
+        else:
+            self.fn = nn.Sequential(
+                nn.Linear(in_dim, h_dim, bias=True),
+                nn.GELU(),
+                nn.Linear(h_dim, z_dim, bias=True),
+                nn.GELU(),
+            )
                 
     def forward(self, x):
         z = self.fn(x)
@@ -236,6 +247,7 @@ class AblationAttComb(nn.Module):
                G_rep=None,
                g_rep_dim=None,
                gb_tau=1.0,
+               batchnorm=False,
                device=None
               ):
         """
@@ -257,7 +269,7 @@ class AblationAttComb(nn.Module):
         """
         super(AblationAttComb, self).__init__()
         self.device = device
-        self.encoder = AblationEncoder(n_genes, z_dim, h_dim=h_dim)
+        self.encoder = AblationEncoder(n_genes, z_dim, h_dim=h_dim, batchnorm=batchnorm)
         self.trans_z = nn.Linear(z_dim, z_dim, bias=True)
         self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, gb_tau, device)
         self.criterion = nn.MSELoss(reduction='mean')
@@ -353,7 +365,7 @@ def sum_obs_pt(A):
     return torch.einsum("ij -> j", A) if A.ndim > 1 else torch.sum(A)    
 
 def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False, 
-            perc=None, device=None, norm=False):
+            perc=None, device=None):
     """Solves least squares X*b=Y for b. (adatpt from scVelo)
     
     Args:
@@ -369,11 +381,6 @@ def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False,
     """
         
     """Solves least squares X*b=Y for b."""
-    if norm:
-        x = (x - torch.mean(x, dim=0)) / torch.std(x, dim=0)
-        y = (y - torch.mean(y, dim=0)) / torch.std(y, dim=0)
-        x = torch.clamp(x, min=-1, max=1)
-        y = torch.clamp(y, min=-1, max=1)
     if perc is not None:
         if not fit_offset:
             perc = perc[1]

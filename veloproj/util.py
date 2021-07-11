@@ -153,7 +153,7 @@ def init_model(adata, args, device):
     return model
 
 
-def fit_model(args, adata, model, inputs, xyids=None, device=None, norm_lr=False):
+def fit_model(args, adata, model, inputs, xyids=None, device=None):
     """Fit a velo autoencoder
     
     Args:
@@ -181,7 +181,6 @@ def fit_model(args, adata, model, inputs, xyids=None, device=None, norm_lr=False
                 xyids=xyids, 
                 aux_weight=args.aux_weight,
                 device=device,
-                norm_lr=norm_lr                             
                 )
 
         losses.append(loss)
@@ -336,7 +335,7 @@ def new_adata(adata, x, s, u, v=None,
     return new_adata
 
 
-def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False, norm_lr=False):
+def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False):
     """Conduct a train step.
     
     Args:
@@ -363,7 +362,6 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
                               fit_offset=True, 
                               perc=[5, 95],
                               device=device,
-                              norm=norm_lr
                               )
         vloss = torch.sum(vloss) * aux_weight
         lr_loss = vloss.item()
@@ -410,13 +408,14 @@ def sklearn_decompose(method, X, S, U, V, use_leastsq=True):
     return x, s, u, v
     
     
-def get_baseline_AE(in_dim, z_dim, h_dim):
+def get_baseline_AE(in_dim, z_dim, h_dim, batchnorm=False):
     """Instantiate a Baseline Autoencoder.
     
     Args:
         in_dim (int): dimensionality of input.
         z_dim (int): dimensionality of low-dimensional space.
         h_dim (int): dimensionality of intermediate layers in MLP.
+        batchnorm (bool): whether append batchnorm after each layer, fixing nan of baseline encoder.
             
     Returns:
         nn.Module: AE instance
@@ -427,7 +426,8 @@ def get_baseline_AE(in_dim, z_dim, h_dim):
     model = AutoEncoder(
                 in_dim,
                 z_dim,
-                h_dim
+                h_dim,
+                batchnorm=batchnorm
                 )
     return model
 
@@ -479,7 +479,9 @@ def get_ablation_attcomb(
                G_rep=None,
                g_rep_dim=None,
                gb_tau=1.0,
-               device=None):
+               device=None,
+               batchnorm=False,
+    ):
     """Instantiate an AttenComb configuration for ablation study.
     
     Args:
@@ -494,6 +496,7 @@ def get_ablation_attcomb(
             # Either G_rep or (n_genes, g_rep_dim) should be provided.
             # priority is given to G_rep.
         gb_tau (float): temperature parameter of gumbel softmax.
+        batchnorm (bool): whether append batchnorm after each layer, fixing nan of baseline encoder.
         device (torch.device): torch device object.
     
     Returns:
@@ -509,7 +512,8 @@ def get_ablation_attcomb(
             G_rep,
             g_rep_dim,
             gb_tau,
-            device
+            batchnorm,
+            device            
     )
     return model.to(device)
 
