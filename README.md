@@ -46,7 +46,7 @@ veloproj --refit 0 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad
 #### Fit a new veloAE model and project velocity into low-dimensional space.
 
 ```
-veloproj --lr 1e-5 --nb_g_src X --gumbsoft_tau 8 --refit 1 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name dentategyrus_model.cpt
+veloproj --lr 1e-5 --nb_g_src X --gumbsoft_tau 5 --refit 1 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name dentategyrus_model.cpt
 ```
 - Arguments:
     - --lr: learning rate, (tunning it if the model does not learn given the default configuration)
