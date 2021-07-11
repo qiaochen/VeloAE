@@ -37,10 +37,8 @@ class Encoder(nn.Module):
         self.edge_weight = edge_weight
         self.fn = nn.Sequential(
             nn.Linear(in_dim, h_dim, bias=True),
-            # nn.BatchNorm1d(h_dim),
             nn.GELU(),
             nn.Linear(h_dim, h_dim, bias=True),
-            # nn.BatchNorm1d(h_dim),
             nn.GELU(),
         )
         self.gc = Sequential( "x, edge_index, edge_weight", 
@@ -162,10 +160,8 @@ class AblationEncoder(nn.Module):
         super(AblationEncoder, self).__init__()
         self.fn = nn.Sequential(
             nn.Linear(in_dim, h_dim, bias=True),
-            nn.BatchNorm1d(h_dim),
             nn.GELU(),
             nn.Linear(h_dim, z_dim, bias=True),
-            nn.BatchNorm1d(z_dim),
             nn.GELU(),
         )
                 
@@ -357,7 +353,7 @@ def sum_obs_pt(A):
     return torch.einsum("ij -> j", A) if A.ndim > 1 else torch.sum(A)    
 
 def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False, 
-            perc=None, device=None):
+            perc=None, device=None, norm=False):
     """Solves least squares X*b=Y for b. (adatpt from scVelo)
     
     Args:
@@ -373,6 +369,11 @@ def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False,
     """
         
     """Solves least squares X*b=Y for b."""
+    if norm:
+        x = (x - torch.mean(x, dim=0)) / torch.std(x, dim=0)
+        y = (y - torch.mean(y, dim=0)) / torch.std(y, dim=0)
+        x = torch.clamp(x, min=-1, max=1)
+        y = torch.clamp(y, min=-1, max=1)
     if perc is not None:
         if not fit_offset:
             perc = perc[1]

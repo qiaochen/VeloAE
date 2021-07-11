@@ -31,10 +31,8 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.fn = nn.Sequential(
             nn.Linear(in_dim, h_dim, bias=True),
-            nn.BatchNorm1d(h_dim),
             nn.GELU(),
             nn.Linear(h_dim, z_dim, bias=True),
-            nn.BatchNorm1d(z_dim),
             nn.GELU(),            
         )
         
@@ -129,7 +127,7 @@ def sum_obs_np(A):
     return np.einsum("ij -> j", A) if A.ndim > 1 else np.sum(A)    
 
 def leastsq_np(x, y, fit_offset=False, constraint_positive_offset=False, 
-            perc=None):
+            perc=None, norm=False):
     """Solves least squares X*b=Y for b. (adatpt from scVelo)
     
     Args:
@@ -142,6 +140,11 @@ def leastsq_np(x, y, fit_offset=False, constraint_positive_offset=False,
     returns:
         fitted offset, gamma and MSE losses
     """
+    if norm:
+        x = (x - np.mean(x, dim=0)) / np.std(x, dim=0)
+        y = (y - np.mean(y, dim=0)) / np.std(y, dim=0)
+        x = torch.clip(x, -1, 1)
+        y = torch.clip(y, -1, 1)
     if perc is not None:
         if not fit_offset:
             perc = perc[1]

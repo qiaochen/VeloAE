@@ -153,7 +153,7 @@ def init_model(adata, args, device):
     return model
 
 
-def fit_model(args, adata, model, inputs, xyids=None, device=None):
+def fit_model(args, adata, model, inputs, xyids=None, device=None, norm_lr=False):
     """Fit a velo autoencoder
     
     Args:
@@ -180,7 +180,8 @@ def fit_model(args, adata, model, inputs, xyids=None, device=None):
                 model, optimizer, 
                 xyids=xyids, 
                 aux_weight=args.aux_weight,
-                device=device
+                device=device,
+                norm_lr=norm_lr                             
                 )
 
         losses.append(loss)
@@ -335,7 +336,7 @@ def new_adata(adata, x, s, u, v=None,
     return new_adata
 
 
-def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False):
+def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False, norm_lr=False):
     """Conduct a train step.
     
     Args:
@@ -362,6 +363,7 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
                               fit_offset=True, 
                               perc=[5, 95],
                               device=device,
+                              norm=norm_lr
                               )
         vloss = torch.sum(vloss) * aux_weight
         lr_loss = vloss.item()
