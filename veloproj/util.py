@@ -236,8 +236,7 @@ def do_projection(model,
         x = model.encoder(tensor_x)
         s = model.encoder(tensor_s)
         u = model.encoder(tensor_u)
-        _, gamma, _ = leastsq_pt(s, u, device=device, fit_offset=True, perc=[5, 95])
-        v = (u - gamma.view(1, -1) * s).cpu().numpy()
+        v = estimate_ld_velocity(s, u, device=device, perc=[5, 95], norm=False).cpu().numpy()
         x = x.cpu().numpy()
         s = s.cpu().numpy()
         u = u.cpu().numpy()
@@ -335,7 +334,7 @@ def new_adata(adata, x, s, u, v=None,
     return new_adata
 
 
-def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False):
+def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False, perc=[5, 95], norm_lr=False):
     """Conduct a train step.
     
     Args:
@@ -360,8 +359,9 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
         _, _, vloss = leastsq_pt(
                               s, u,
                               fit_offset=True, 
-                              perc=[5, 95],
+                              perc=perc,
                               device=device,
+                              norm=norm_lr
                               )
         vloss = torch.sum(vloss) * aux_weight
         lr_loss = vloss.item()
@@ -374,7 +374,7 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
     return loss.item()
 
 
-def sklearn_decompose(method, X, S, U, V, use_leastsq=True):
+def sklearn_decompose(method, X, S, U, V, use_leastsq=True, norm_lr=False):
     """General interface using sklearn.decomposition.XXX method
     
     Args:
@@ -400,12 +400,22 @@ def sklearn_decompose(method, X, S, U, V, use_leastsq=True):
     s = method.transform(S)
     u = method.transform(U)
     if use_leastsq:
-        _, gamma, loss = leastsq_np(s, u, fit_offset=True, perc=[5, 95])
+        _, gamma, loss = leastsq_np(s, u, fit_offset=True, perc=[5, 95], norm=norm_lr)
         v = u - gamma.reshape(1, -1) * s
     else:
         v = method.transform(S + V) - s
     
     return x, s, u, v
+
+
+def estimate_ld_velocity(s, u, device=None, perc=[5, 95], norm=False):
+    with torch.no_grad():
+        _, gamma, _ = leastsq_pt(s, u, 
+                                 device=device, 
+                                 perc=perc,
+                                 norm=norm
+        )
+    return u - gamma * s
     
     
 def get_baseline_AE(in_dim, z_dim, h_dim, batchnorm=False):

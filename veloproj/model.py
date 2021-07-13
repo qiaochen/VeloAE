@@ -162,10 +162,10 @@ class AblationEncoder(nn.Module):
         if batchnorm:
             self.fn = nn.Sequential(
                 nn.Linear(in_dim, h_dim, bias=True),
-                nn.BatchNorm1d(h_dim),
+                nn.LayerNorm(h_dim),
                 nn.GELU(),
                 nn.Linear(h_dim, z_dim, bias=True),
-                nn.BatchNorm1d(z_dim),
+                nn.LayerNorm(z_dim),
                 nn.GELU(),
             )
         else:
@@ -364,8 +364,8 @@ def sum_obs_pt(A):
     """summation over axis 0 (obs) equivalent to np.sum(A, 0)"""
     return torch.einsum("ij -> j", A) if A.ndim > 1 else torch.sum(A)    
 
-def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False, 
-            perc=None, device=None):
+def leastsq_pt(x, y, fit_offset=True, constraint_positive_offset=False, 
+            perc=None, device=None, norm=False):
     """Solves least squares X*b=Y for b. (adatpt from scVelo)
     
     Args:
@@ -381,6 +381,12 @@ def leastsq_pt(x, y, fit_offset=False, constraint_positive_offset=False,
     """
         
     """Solves least squares X*b=Y for b."""
+    if norm:
+        x = (x - torch.mean(x, dim=0, keepdim=True)) / torch.std(x, dim=0, keepdim=True)
+        y = (y - torch.mean(y, dim=0, keepdim=True)) / torch.std(y, dim=0, keepdim=True)
+        x = torch.clamp(x, -1, 1)
+        y = torch.clamp(y, -1, 1)
+        
     if perc is not None:
         if not fit_offset:
             perc = perc[1]
