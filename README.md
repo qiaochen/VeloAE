@@ -46,7 +46,7 @@ veloproj --refit 0 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad
 #### Fit a new veloAE model and project velocity into low-dimensional space.
 
 ```
-veloproj --lr 1e-5 --nb_g_src X --gumbsoft_tau 5 --refit 1 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name dentategyrus_model.cpt
+veloproj --lr 1e-5 --nb_g_src X --gumbsoft_tau 5 --refit 1 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name dentategyrus_model.cpt --output './'
 ```
 - Arguments:
     - --lr: learning rate, (tunning it if the model does not learn given the default configuration)
@@ -56,11 +56,12 @@ veloproj --lr 1e-5 --nb_g_src X --gumbsoft_tau 5 --refit 1 --adata notebooks/den
     - --adata: path to the Anndata with X_umap, transcriptom, spliced and unspliced mRNA expressions.
     - --device: gpu or cpu. Fitting using GPU is much faster than cpu.
     - --model-name: path for storing the trained model.
+      --output: specify the directory for storing fitting results
     
 - Output:
-    - A trained model with "model-name" in the output folder (default ./).
-    - A plot showing the training loss curve in the output folder.
-    - A new low-dimensional Anndata instance with default name "projection.h5ad" in the output folder (default ./)
+    - A trained model with "model-name" in the output folder (default ./, can be specified using arg --output).
+    - A plot showing the training loss curve named as `training_loss.png` in the output folder (default ./, can be specified using arg --output).
+    - A new low-dimensional Anndata instance with default name "projection.h5ad" in the output folder (default ./, can be specified using arg --output)
     - An uncolored figure showing the low-dimensional velocity field, stored in folder './figures'.
 
 Use command line help to investigate more arguments.
