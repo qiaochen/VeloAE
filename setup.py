@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
         name='veloAE',
-        version='0.0.1',
+        version='0.0.2',
         description='Autoencoding single cell velocity',
         author='Chen Qiao',
         author_email='cqiao@connect.hku.hk',

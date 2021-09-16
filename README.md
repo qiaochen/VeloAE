@@ -46,20 +46,26 @@ veloproj --refit 0 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad
 #### Fit a new veloAE model and project velocity into low-dimensional space.
 
 ```
-veloproj --lr 5e-6 --refit 1 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name dentategyrus_model.cpt
+veloproj --lr 1e-5 --nb_g_src X --gumbsoft_tau 5 --refit 1 --adata notebooks/dentategyrus/data/DentateGyrus/10X43_1.h5ad --device cuda:3 --model-name dentategyrus_model.cpt --output './'
 ```
 - Arguments:
-    - --lr: learning rate, (should be tunned to minimize loss robustly)
+    - --lr: learning rate, (tunning it if the model does not learn given the default configuration)
+    - --nb_g_src: expression matrix for generating neighborhood graph of cells, can be 'X' (transcriptome), 'S' (spliced), and 'U' (unspliced)
+    - --gumbsoft_tau: temperature parameter of gumbel softmax function, a smaller value (e.g., 1) makes attention sparse and training more challenging, while a larger value (e.g., 10) makes attention more evenly distributed and loss more smoothly converge to lower value.
     - --refit: if 1, fit a new model
     - --adata: path to the Anndata with X_umap, transcriptom, spliced and unspliced mRNA expressions.
     - --device: gpu or cpu. Fitting using GPU is much faster than cpu.
     - --model-name: path for storing the trained model.
+      --output: specify the directory for storing fitting results
     
 - Output:
-    - A trained model with "model-name" in the output folder (default ./).
-    - A plot showing the training loss curve in the output folder.
-    - A new low-dimensional Anndata instance with default name "projection.h5ad" in the output folder (default ./)
+    - A trained model with "--model-name" in the output folder (default ./, can be specified using arg --output).
+    - A new low-dimensional Anndata instance with default name "projection.h5ad" in the output folder (default ./, can be specified using arg --output)
     - An uncolored figure showing the low-dimensional velocity field, stored in folder './figures'.
+    - A plot showing the training loss curve named as `training_loss.png` in the output folder (default ./, can be specified using arg --output).
+    
+    ![Example training loss (lr: 1e-5) figure, showing a fitted model. The loss converges before reaching the last epoch of training, so decrease the number of epochs to that of the early converging stage could save time.](https://raw.githubusercontent.com/qiaochen/VeloRep/rev/test/training_loss.png)
+    >If the training loss decreases smoothly but not converge after exhausting all the epochs, please try either more epochs or larger learning rates. Note, however, that learning rates should not be set too large to make the loss osciliates and never decreases.
 
 Use command line help to investigate more arguments.
 ```
