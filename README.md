@@ -1,5 +1,8 @@
 # VeloAE
-Low-dimensional Estimation of Single Cell Velocity with AutoEncoder
+Low-dimensional Estimation of Single Cell RNA Velocity with AutoEncoder.
+VeloAE can learn low-dimensional projections for count matrices leveraging a tailored AutoEncoder, with the aim to obtain better representations for RNA velocity estimation. Results of VeloAE could be previewed in the jupyter notebooks located under the `notebooks` folder.
+
+Our revised manuscript is in progress, while the first version could be found in bioarxiv with the title [Representation learning of RNA velocity reveals robust cell transitions](https://www.biorxiv.org/content/10.1101/2021.03.19.436127v1)
 
 ## Install
 
