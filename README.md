@@ -1,5 +1,5 @@
-# VeloRep
-Low-dimensional Projection of Single Cell Velocity with AutoEncoder
+# VeloAE
+Low-dimensional Estimation of Single Cell Velocity with AutoEncoder
 
 ## Install
 
