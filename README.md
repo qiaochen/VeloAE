@@ -4,6 +4,7 @@ VeloAE can learn low-dimensional projections for count matrices leveraging a tai
 
 Our revised manuscript is in progress, while the first version could be found in bioarxiv with the title [Representation learning of RNA velocity reveals robust cell transitions](https://www.biorxiv.org/content/10.1101/2021.03.19.436127v1)
 
+>Following [https://github.com/qiaochen/VeloAE/blob/main/notebooks/readme.md](https://github.com/qiaochen/VeloAE/blob/main/notebooks/readme.md) to access the datasets used in the notebooks and manuscript
 ## Install
 
 #### Dependencies:
