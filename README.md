@@ -1,3 +1,5 @@
+>Exciting news 2022/04/04! [UnitTVelo](https://github.com/StatBiomed/UniTVelo), a new single cell RNA velocity estimation tool that addresses the challenging datasets of existing tools is published by our lab.
+
 # VeloAE
 Low-dimensional Estimation of Single Cell RNA Velocity with AutoEncoder.
 VeloAE can learn low-dimensional projections for count matrices leveraging a tailored AutoEncoder, with the aim to obtain better representations for RNA velocity estimation. Results of VeloAE could be previewed in the jupyter notebooks located under the `notebooks` folder.
