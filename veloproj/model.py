@@ -411,7 +411,7 @@ def leastsq_pt(x, y, fit_offset=True, constraint_positive_offset=False,
         if constraint_positive_offset:
             idx = offset < 0
             if gamma.ndim > 0:
-                gamma[idx] = xy_[idx] / xx_[idx]
+                gamma = (xy_ / xx_) * idx + gamma * ~idx
             else:
                 gamma = xy_ / xx_
             offset = torch.clip(offset, 0, None)
@@ -420,7 +420,8 @@ def leastsq_pt(x, y, fit_offset=True, constraint_positive_offset=False,
         offset = torch.zeros(x.shape[1]).to(device) if x.ndim > 1 else 0
     nans_offset, nans_gamma = torch.isnan(offset), torch.isnan(gamma)
     if torch.any(nans_offset) or torch.any(nans_gamma):
-        if torch.__version__.startswith('1.8'):
+        version_1_8 = sum([int(this) >= that for this,that in zip(torch.__version__.split('.')[:2], [1, 8])]) == 2
+        if version_1_8:
             offset = torch.nan_to_num(offset)
             gamma  = torch.nan_to_num(gamma)
         else:
