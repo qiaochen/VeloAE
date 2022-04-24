@@ -425,7 +425,8 @@ def leastsq_pt(x, y, fit_offset=True, constraint_positive_offset=False,
             offset = torch.nan_to_num(offset)
             gamma  = torch.nan_to_num(gamma)
         else:
-            offset[torch.isnan(offset)], gamma[torch.isnan(gamma)] = 0, 0
+            offset = torch.where(nans_offset, torch.zeros_like(offset), offset)
+            gamma  = torch.where(nans_gamma, torch.zeros_like(gamma), gamma)
         
     loss = torch.square(y - x * gamma.view(1,-1) - offset)
     if perc is not None:
