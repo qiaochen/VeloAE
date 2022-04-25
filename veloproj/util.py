@@ -18,6 +18,7 @@ from sklearn.decomposition import PCA
 from .model import leastsq_pt
 from .baseline import leastsq_np
 
+N_NB=30
 
 def get_parser():
     """Get the argument parser
@@ -46,6 +47,9 @@ def get_parser():
                         help="""whether or not to enroll transcriptom reads for training 
                                 (default: False)."""
                        )
+    parser.add_argument('--sl1_beta', type=float, default=1.0,
+                        help="""beta parameter of smoothl1 loss (default: 1.0)."""
+                       )
     # parser.add_argument('--use_s', type=bool, default=True,
     #                     help="""whether or not to enroll spliced mRNA reads for training 
     #                             (default: True)."""
@@ -67,6 +71,8 @@ def get_parser():
                        )
     parser.add_argument('--z-dim', type=int, default=100,
                         help='dimentionality of the hidden representation Z (default: 100)')
+    parser.add_argument('--n_conn_nb', type=int, default=30,
+                        help='Number of neighbors for GCN adjacency matrix (default: 30)')
     parser.add_argument('--g-rep-dim', type=int, default=100,
                         help='dimentionality of gene representation (default: 256)')
     parser.add_argument('--h-dim', type=int, default=256,
@@ -148,6 +154,7 @@ def init_model(adata, args, device):
                      g_rep_dim=args.g_rep_dim,
                      gb_tau=args.gumbsoft_tau,
                      g_basis=args.nb_g_src,
+                     n_conn_nb=args.n_conn_nb,
                      device=device
                     )
     return model
@@ -180,7 +187,9 @@ def fit_model(args, adata, model, inputs, xyids=None, device=None):
                 model, optimizer, 
                 xyids=xyids, 
                 aux_weight=args.aux_weight,
+                smoothl1_beta=args.sl1_beta,             
                 device=device,
+                norm_lr=False
                 )
 
         losses.append(loss)
@@ -276,7 +285,7 @@ def init_adata(args, adata=None):
     return adata
 
 
-def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU"):
+def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU", n_nb=30):
     """Construct neighborhood graph for target adata using expression data 
     from source data.
 
@@ -290,8 +299,8 @@ def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU"):
                   "U": src_adata.layers['unspliced']
                   }
     tgt_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
-    scv.pp.neighbors(tgt_adata, n_pcs=30, n_neighbors=30)
-    scv.pp.moments(tgt_adata, n_pcs=30, n_neighbors=30)
+    scv.pp.neighbors(tgt_adata, n_pcs=30, n_neighbors=n_nb)
+    scv.pp.moments(tgt_adata, n_pcs=30, n_neighbors=n_nb)
     return tgt_adata
 
     
@@ -334,7 +343,7 @@ def new_adata(adata, x, s, u, v=None,
     return new_adata
 
 
-def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False, perc=[5, 95], norm_lr=False):
+def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False, perc=[5, 95], smoothl1_beta=1.0, norm_lr=False):
     """Conduct a train step.
     
     Args:
@@ -349,21 +358,22 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
     """
     optimizer.zero_grad()
     loss = 0
-    for X in Xs:
+    for X in Xs[:-1]:
         loss = loss + model(X)
 
     ae_loss = loss.item()
     lr_loss = 0
     if xyids:
         s, u = model.encoder(Xs[xyids[0]]), model.encoder(Xs[xyids[1]])
-        _, _, vloss = leastsq_pt(
+        v    = model.encoder(Xs[xyids[0]] + Xs[-1]) - s
+        _, gamma, vloss = leastsq_pt(
                               s, u,
-                              fit_offset=True, 
+                              fit_offset=False, 
                               perc=perc,
                               device=device,
                               norm=norm_lr
                               )
-        vloss = torch.sum(vloss) * aux_weight
+        vloss = torch.sum(vloss) * aux_weight + torch.nn.functional.smooth_l1_loss(u - gamma * s, v, beta=smoothl1_beta)
         lr_loss = vloss.item()
         loss += vloss
         
@@ -411,11 +421,12 @@ def sklearn_decompose(method, X, S, U, V, use_leastsq=True, norm_lr=False):
 def estimate_ld_velocity(s, u, device=None, perc=[5, 95], norm=False):
     with torch.no_grad():
         _, gamma, _ = leastsq_pt(s, u, 
+                                 fit_offset=False,
                                  device=device, 
                                  perc=perc,
                                  norm=norm
         )
-    return u - gamma * s
+    return u - gamma * s 
     
     
 def get_baseline_AE(in_dim, z_dim, h_dim, batchnorm=False):
@@ -468,7 +479,7 @@ def get_ablation_CohAgg(
     nb_indices = adata.uns['neighbors']['indices']
     xs, ys = np.repeat(range(adata.n_obs), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
     edge_weight = torch.FloatTensor(conn[xs,ys]).view(-1).to(device)
-    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), xs.reshape(1, -1)])).to(device)
+    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), ys.reshape(1, -1)])).to(device)
     model = AblationCohAgg(
         edge_index,
         edge_weight,
@@ -539,6 +550,7 @@ def get_veloAE(
              g_rep_dim=100,
              gb_tau=1.0,
              g_basis="SU",
+             n_conn_nb=30,
              device=None):
     """Instantiate a VeloAE object.
     
@@ -562,12 +574,12 @@ def get_veloAE(
     """
     from .model import VeloAutoencoder
     adata = adata.copy()
-    adata = construct_nb_graph_for_tgt(adata, adata, g_basis.upper())
+    adata = construct_nb_graph_for_tgt(adata, adata, g_basis.upper(), n_nb=n_conn_nb)
     conn = adata.obsp['connectivities']
     nb_indices = adata.uns['neighbors']['indices']
     xs, ys = np.repeat(range(n_cells), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
     edge_weight = torch.FloatTensor(conn[xs,ys]).view(-1).to(device)
-    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), xs.reshape(1, -1)])).to(device)
+    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), ys.reshape(1, -1)])).to(device)
     model = VeloAutoencoder(
                 edge_index,
                 edge_weight,
