@@ -10,7 +10,7 @@ import numpy as np
 from torch import nn
 from torch_geometric.nn import GCNConv, Sequential
 from torch.nn import functional as F
-
+from torch_geometric.nn.dense.linear import Linear
 
 class Encoder(nn.Module):
     """Encoder
@@ -41,22 +41,42 @@ class Encoder(nn.Module):
             nn.Linear(h_dim, h_dim, bias=True),
             nn.GELU(),
         )
-        self.gc = Sequential( "x, edge_index, edge_weight", 
-            [(GCNConv(h_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
-            #   nn.BatchNorm1d(z_dim),
-              nn.GELU(),
-             (GCNConv(z_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
-            #   nn.BatchNorm1d(z_dim),
-              nn.GELU(),
-              nn.Linear(z_dim, z_dim)]
-        )
+#         self.gc = Sequential( "x, edge_index, edge_weight", 
+#             [(GCNConv(h_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
+#             #   nn.BatchNorm1d(z_dim),
+#               nn.GELU(),
+#              (GCNConv(z_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
+#             #   nn.BatchNorm1d(z_dim),
+#               nn.GELU(),
+#               nn.Linear(z_dim, z_dim)]
+#         )
+
+        ##### begin counterpart of self.gc #####
+        self.lin1 = Linear(h_dim, z_dim, weight_initializer='glorot', bias=False)
+        self.bias1 = nn.Parameter(torch.Tensor(z_dim))
+        self.act = nn.GELU()
+        self.lin2 = Linear(z_dim, z_dim, weight_initializer='glorot', bias=False)
+        self.bias2 =  nn.Parameter(torch.Tensor(z_dim))
+        self.outlin = nn.Linear(z_dim, z_dim)
+        
+        self.reset_params()
+        ##### end counterpart of self.gc #####
+        
         self.gen = nn.Sequential(
             nn.Linear(z_dim, z_dim, bias=True)
         )
         
+    def reset_params(self):
+        from torch_geometric.nn.inits import zeros
+        self.lin1.reset_parameters()
+        self.lin2.reset_parameters()
+        zeros(self.bias1)
+        zeros(self.bias2)
+        
     def forward(self, x, return_raw=False):
         z = self.fn(x)
-        z = self.gc(z, self.edge_index, self.edge_weight)
+#         z = self.gc(z, self.edge_index, self.edge_weight)
+        z = self.outlin(self.act(self.lin2(self.act(self.lin1(z) + self.bias1)) + self.bias2))
         if return_raw:
             return self.gen(z), z
         return self.gen(z)
@@ -433,4 +453,3 @@ def leastsq_pt(x, y, fit_offset=True, constraint_positive_offset=False,
         loss = loss * weights
     loss = sum_obs_pt(loss) / n_obs
     return offset, gamma, loss
-

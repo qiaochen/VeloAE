@@ -4,7 +4,7 @@
 """
 from .util import get_parser, new_adata, init_model, init_adata, fit_model, do_projection
 import torch
-import os, logging, timeit, random
+import os, logging, timeit
 import numpy as np
 
 
@@ -19,11 +19,11 @@ def main():
     args = parser.parse_args()
     
     torch.manual_seed(args.seed)
-    random.seed(args.seed)
     np.random.seed(args.seed)
-    torch.cuda.manual_seed_all(args.seed)
-    torch.backends.cudnn.deterministic = True 
- 
+    
+    if args.device.startswith('cuda'):
+        torch.cuda.manual_seed(args.seed)
+        torch.backends.cudnn.deterministic = True
     
     device = torch.device(args.device)
     
@@ -47,7 +47,7 @@ def main():
     logger.info("Finished model initialization...")
     logger.info(f"{timeit.default_timer() - start_time:.2}s passed.")
     
-    inputs = [tensor_s, tensor_u, tensor_v]
+    inputs = [tensor_s, tensor_u]
     xyids = [0, 1]
     if args.use_x:
         inputs.append(tensor_x)
