@@ -18,7 +18,6 @@ from sklearn.decomposition import PCA
 from .model import leastsq_pt
 from .baseline import leastsq_np
 
-N_NB=30
 
 def get_parser():
     """Get the argument parser
@@ -47,9 +46,35 @@ def get_parser():
                         help="""whether or not to enroll transcriptom reads for training 
                                 (default: False)."""
                        )
+    parser.add_argument('--fit_offset_train', type=bool, default=False,
+                        help="""whether or not to fit offset for linear regression 
+                                (default: False)."""
+                       ) 
+    parser.add_argument('--fit_offset_pred', type=bool, default=False,
+                        help="""whether or not to fit offset for velocity estimation
+                                (default: False)."""
+                       ) 
+    parser.add_argument('--use_offset_pred', type=bool, default=False,
+                        help="""whether or not to use offset for velocity estimation
+                                (default: False)."""
+                       )                         
+    parser.add_argument('--use_gcn', type=bool, default=True,
+                        help="""whether or not to use gcn for cohort aggregation
+                                (default: True)."""
+                       )
+    parser.add_argument('--use_norm', type=bool, default=False,
+                        help="""whether or not to normalize low-dim s and u for velocity estimation
+                                (default: False)."""
+                       )                                                                                         
     parser.add_argument('--sl1_beta', type=float, default=1.0,
                         help="""beta parameter of smoothl1 loss (default: 1.0)."""
                        )
+    parser.add_argument('--v_rg_wt', type=float, default=1.0,
+                        help="""Regularization weight of velocity constraint (default: 1.0)."""
+                       ) 
+    parser.add_argument('--n_nb_newadata', type=int, default=30,
+                        help="""Number of neighbors in new adata (default: 30)."""
+                       )                                         
     # parser.add_argument('--use_s', type=bool, default=True,
     #                     help="""whether or not to enroll spliced mRNA reads for training 
     #                             (default: True)."""
@@ -155,12 +180,13 @@ def init_model(adata, args, device):
                      gb_tau=args.gumbsoft_tau,
                      g_basis=args.nb_g_src,
                      n_conn_nb=args.n_conn_nb,
+                     use_gcn=args.use_gcn,
                      device=device
                     )
     return model
 
 
-def fit_model(args, adata, model, inputs, xyids=None, device=None):
+def fit_model(args, adata, model, inputs, tensor_v, xyids=None, device=None):
     """Fit a velo autoencoder
     
     Args:
@@ -183,13 +209,17 @@ def fit_model(args, adata, model, inputs, xyids=None, device=None):
     model.train()
     while i < args.n_epochs:
         i += 1
-        loss = train_step_AE(inputs, 
+        loss = train_step_AE(
+                inputs, 
+                tensor_v,
                 model, optimizer, 
                 xyids=xyids, 
                 aux_weight=args.aux_weight,
-                smoothl1_beta=args.sl1_beta,             
+                smoothl1_beta=args.sl1_beta, 
+                v_rg_wt=args.v_rg_wt,   
+                fit_offset=args.fit_offset_train,         
                 device=device,
-                norm_lr=False
+                norm_lr=args.use_norm
                 )
 
         losses.append(loss)
@@ -245,14 +275,21 @@ def do_projection(model,
         x = model.encoder(tensor_x)
         s = model.encoder(tensor_s)
         u = model.encoder(tensor_u)
-        v = estimate_ld_velocity(s, u, device=device, perc=[5, 95], norm=False).cpu().numpy()
+        v = estimate_ld_velocity(s, u, 
+                               device=device, perc=[5, 95], 
+                               norm=args.use_norm, 
+                               fit_offset=args.fit_offset_pred,
+                               use_offset=args.use_offset_pred,
+                               ).cpu().numpy()
         x = x.cpu().numpy()
         s = s.cpu().numpy()
         u = u.cpu().numpy()
 
     ld_adata = new_adata(adata, x, s, u, v, new_v_key="velocity", 
                         X_emb_key=args.vis_key,
-                        g_basis=args.nb_g_src)
+                        g_basis=args.nb_g_src,
+                        n_nb_newadata=args.n_nb_newadata,
+    )
     scv.tl.velocity_graph(ld_adata, vkey='velocity')
     if color:
         scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
@@ -308,6 +345,7 @@ def new_adata(adata, x, s, u, v=None,
               new_v_key="new_velocity", 
               X_emb_key="X_umap",
               g_basis="SU",
+              n_nb_newadata=30,
              ):
     """Copy a new Anndata object while keeping some original information.
     
@@ -334,7 +372,7 @@ def new_adata(adata, x, s, u, v=None,
     for key in adata.obs:
         new_adata.obs[key] = adata.obs[key].copy()
     
-    new_adata = construct_nb_graph_for_tgt(adata, new_adata, g_basis)
+    new_adata = construct_nb_graph_for_tgt(adata, new_adata, g_basis, n_nb=n_nb_newadata)
         
     for clr in [key for key in adata.uns if key.split("_")[-1] == 'colors' ]:
         new_adata.uns[clr] = adata.uns[clr]
@@ -343,7 +381,19 @@ def new_adata(adata, x, s, u, v=None,
     return new_adata
 
 
-def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False, perc=[5, 95], smoothl1_beta=1.0, norm_lr=False):
+def train_step_AE(Xs,
+                  tensor_v,
+                  model, 
+                  optimizer, 
+                  xyids=None, 
+                  device=None, 
+                  aux_weight=1.0, 
+                  rt_all_loss=False, 
+                  perc=[5, 95], 
+                  smoothl1_beta=1.0, 
+                  v_rg_wt=1.0,
+                  fit_offset=False,
+                  norm_lr=False):
     """Conduct a train step.
     
     Args:
@@ -358,22 +408,23 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
     """
     optimizer.zero_grad()
     loss = 0
-    for X in Xs[:-1]:
+    for X in Xs:
         loss = loss + model(X)
 
     ae_loss = loss.item()
     lr_loss = 0
     if xyids:
         s, u = model.encoder(Xs[xyids[0]]), model.encoder(Xs[xyids[1]])
-        v    = model.encoder(Xs[xyids[0]] + Xs[-1]) - s
-        _, gamma, vloss = leastsq_pt(
+        v    = (model.encoder(Xs[xyids[0]] + tensor_v) - model.encoder(Xs[xyids[0]] - tensor_v)) / 2 
+        # v    = model.encoder(Xs[xyids[0]] + tensor_v) - s
+        offset, gamma, vloss = leastsq_pt(
                               s, u,
-                              fit_offset=False, 
+                              fit_offset=fit_offset,
                               perc=perc,
                               device=device,
                               norm=norm_lr
                               )
-        vloss = torch.sum(vloss) * aux_weight + torch.nn.functional.smooth_l1_loss(u - gamma * s, v, beta=smoothl1_beta)
+        vloss = torch.sum(vloss) * aux_weight + torch.nn.functional.smooth_l1_loss(u - gamma * s - offset, v, beta=smoothl1_beta) * v_rg_wt
         lr_loss = vloss.item()
         loss += vloss
         
@@ -418,15 +469,16 @@ def sklearn_decompose(method, X, S, U, V, use_leastsq=True, norm_lr=False):
     return x, s, u, v
 
 
-def estimate_ld_velocity(s, u, device=None, perc=[5, 95], norm=False):
+def estimate_ld_velocity(s, u, device=None, perc=[5, 95], norm=False, fit_offset=False, use_offset=False):
     with torch.no_grad():
-        _, gamma, _ = leastsq_pt(s, u, 
-                                 fit_offset=False,
+        offset, gamma, _ = leastsq_pt(s, u, 
+                                 fit_offset=fit_offset,
                                  device=device, 
                                  perc=perc,
                                  norm=norm
         )
-    return u - gamma * s 
+        offset = offset if use_offset else 0
+    return u - gamma * s - offset
     
     
 def get_baseline_AE(in_dim, z_dim, h_dim, batchnorm=False):
@@ -551,6 +603,7 @@ def get_veloAE(
              gb_tau=1.0,
              g_basis="SU",
              n_conn_nb=30,
+             use_gcn=False,
              device=None):
     """Instantiate a VeloAE object.
     
@@ -592,6 +645,7 @@ def get_veloAE(
                 G_rep=G_embeddings,
                 g_rep_dim=g_rep_dim,
                 gb_tau=gb_tau,
+                use_gcn=use_gcn,
                 device=device
                 )
     return model.to(device)

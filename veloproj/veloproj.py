@@ -47,14 +47,14 @@ def main():
     logger.info("Finished model initialization...")
     logger.info(f"{timeit.default_timer() - start_time:.2}s passed.")
     
-    inputs = [tensor_s, tensor_u, tensor_v]
+    inputs = [tensor_s, tensor_u]
     xyids = [0, 1]
     if args.use_x:
         inputs.append(tensor_x)
     
     if args.refit == 1:
         logger.info("Fitting model...")
-        model = fit_model(args, adata, model, inputs, xyids, device)
+        model = fit_model(args, adata, model, inputs, tensor_v, xyids, device)
         logger.info("Finished model fitting.")
         logger.info(f"{(timeit.default_timer() - start_time)/60:.2}min passed.")
     else:

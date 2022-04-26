@@ -8,7 +8,7 @@ import torch
 import numpy as np
 
 from torch import nn
-from torch_geometric.nn import GCNConv, Sequential
+from torch_geometric.nn import GCNConv, Sequential, GATv2Conv, GATConv
 from torch.nn import functional as F
 
 
@@ -21,7 +21,8 @@ class Encoder(nn.Module):
                  z_dim,
                  edge_index,
                  edge_weight,
-                 h_dim=256
+                 h_dim=256,
+                 use_gcn=False,
                 ):
         """
         Args:
@@ -41,15 +42,27 @@ class Encoder(nn.Module):
             nn.Linear(h_dim, h_dim, bias=True),
             nn.GELU(),
         )
-        self.gc = Sequential( "x, edge_index, edge_weight", 
-            [(GCNConv(h_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
-            #   nn.BatchNorm1d(z_dim),
-              nn.GELU(),
-             (GCNConv(z_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
-            #   nn.BatchNorm1d(z_dim),
-              nn.GELU(),
-              nn.Linear(z_dim, z_dim)]
-        )
+        if use_gcn:
+            self.gc = Sequential( "x, edge_index, edge_weight", 
+                [(GCNConv(h_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
+                #   nn.BatchNorm1d(z_dim),
+                nn.GELU(),
+                (GCNConv(z_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
+                #   nn.BatchNorm1d(z_dim),
+                nn.GELU(),
+                nn.Linear(z_dim, z_dim)]
+            )
+        # GATv2Conv
+        else:
+            self.gc = Sequential( "x, edge_index, edge_weight", 
+                [ (GATConv(h_dim, z_dim,  add_self_loops=True), "x, edge_index -> x"),
+                #   nn.BatchNorm1d(z_dim),
+                nn.GELU(),            
+                #   nn.BatchNorm1d(z_dim),
+                (GATConv(z_dim, z_dim,  add_self_loops=True), "x, edge_index -> x"),
+                nn.GELU(),
+                nn.Linear(z_dim, z_dim)]
+            )
         self.gen = nn.Sequential(
             nn.Linear(z_dim, z_dim, bias=True)
         )
@@ -299,6 +312,7 @@ class VeloAutoencoder(nn.Module):
                G_rep=None,
                g_rep_dim=None,
                gb_tau=1.0,
+               use_gcn=False,
                device=None
               ):
         """
@@ -322,7 +336,7 @@ class VeloAutoencoder(nn.Module):
         """
         super(VeloAutoencoder, self).__init__()
         self.device = device
-        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim)
+        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim, use_gcn=use_gcn)
         self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, gb_tau, device)
         self.criterion = nn.MSELoss(reduction='mean')
         
@@ -384,8 +398,8 @@ def leastsq_pt(x, y, fit_offset=True, constraint_positive_offset=False,
     if norm:
         x = (x - torch.mean(x, dim=0, keepdim=True)) / torch.std(x, dim=0, keepdim=True)
         y = (y - torch.mean(y, dim=0, keepdim=True)) / torch.std(y, dim=0, keepdim=True)
-        x = torch.clamp(x, -1, 1)
-        y = torch.clamp(y, -1, 1)
+        x = torch.clamp(x, -1.96, 1.96)
+        y = torch.clamp(y, -1.96, 1.96)
         
     if perc is not None:
         if not fit_offset:
@@ -418,7 +432,9 @@ def leastsq_pt(x, y, fit_offset=True, constraint_positive_offset=False,
     else:
         gamma = xy_ / xx_
         offset = torch.zeros(x.shape[1]).to(device) if x.ndim > 1 else 0
+
     nans_offset, nans_gamma = torch.isnan(offset), torch.isnan(gamma)
+
     if torch.any(nans_offset) or torch.any(nans_gamma):
         version_1_8 = sum([int(this) >= that for this,that in zip(torch.__version__.split('.')[:2], [1, 8])]) == 2
         if version_1_8:
