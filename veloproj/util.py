@@ -204,7 +204,9 @@ def get_mask(path, adata):
     types = lines[1:]
     sel = np.zeros(adata.n_obs, dtype=int)
     for t_name in types:
-        sel[adata.obs[obs_col] == t_name] = 1
+        sel[adata.obs[obs_col].values == t_name] = 1
+    if sel.sum() == 0:
+        print("Note: No Masked cells although maksing is invoked!!")
     return sel
 
 
@@ -227,7 +229,7 @@ def fit_model(args, adata, model, inputs, tensor_v, xyids=None, device=None):
     i, losses = 0, [sys.maxsize]  
     min_loss = losses[-1]
     model_saved = False
-    mask = torch.LongTensor(get_mask(args.mask_cluster_list, adata)).to(device)
+    mask = torch.LongTensor(get_mask(args.mask_cluster_list, adata)).view(-1, 1).to(device)
     model.train()
     while i < args.n_epochs:
         i += 1
