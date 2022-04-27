@@ -38,9 +38,16 @@ def get_parser():
     parser.add_argument('--exp-name', type=str, default="experiment", metavar='PATH',
                         help='name of the experiment')
     parser.add_argument('--adata', type=str, metavar='PATH', 
-                        help="""path to the Anndata file with transcriptom, spliced and unspliced
+                        help="""path to the Anndata file with transcriptome, spliced and unspliced
                                 mRNA expressions, the adata should be already preprocessed and with
                                 velocity estimated in the original space."""
+                       )
+    parser.add_argument('--mask_cluster_list', type=str, metavar='PATH', default=None,
+                        help="""Used in coorporation with v_rg_wt. path to the text file listing all the cell clusters which you would 
+                             like to keep similarly estimated using veloAE in the low-dimensional space as 
+                             a simple projection of raw velocity (e.g., velocity estimated via scvelo dynamic mode/stochastic mode) 
+                             The first line of the file should specify the column name of adata.obs to locate the cluster annotations.
+                             ."""
                        )
     parser.add_argument('--use_x', type=bool, default=False,
                         help="""whether or not to enroll transcriptom reads for training 
@@ -69,8 +76,8 @@ def get_parser():
     parser.add_argument('--sl1_beta', type=float, default=1.0,
                         help="""beta parameter of smoothl1 loss (default: 1.0)."""
                        )
-    parser.add_argument('--v_rg_wt', type=float, default=1.0,
-                        help="""Regularization weight of velocity constraint (default: 1.0)."""
+    parser.add_argument('--v_rg_wt', type=float, default=0.0,
+                        help="""Regularization weight of velocity constraint (default: 0)."""
                        ) 
     parser.add_argument('--n_nb_newadata', type=int, default=30,
                         help="""Number of neighbors in new adata (default: 30)."""
@@ -186,6 +193,21 @@ def init_model(adata, args, device):
     return model
 
 
+def get_mask(path, adata):
+    if path is None:
+        return 1
+    if not os.path.exists(path):
+        raise Exception(f"Can't open {path}, does is exist?")
+    with open(path, 'r') as infile:
+        lines = [line.strip() for line in infile]
+    obs_col = lines[0]
+    types = lines[1:]
+    sel = np.zeros(adata.n_obs, dtype=int)
+    for t_name in types:
+        sel[adata.obs[obs_col] == t_name] = 1
+    return sel
+
+
 def fit_model(args, adata, model, inputs, tensor_v, xyids=None, device=None):
     """Fit a velo autoencoder
     
@@ -205,7 +227,7 @@ def fit_model(args, adata, model, inputs, tensor_v, xyids=None, device=None):
     i, losses = 0, [sys.maxsize]  
     min_loss = losses[-1]
     model_saved = False
-
+    mask = torch.LongTensor(get_mask(args.mask_cluster_list, adata)).to(device)
     model.train()
     while i < args.n_epochs:
         i += 1
@@ -219,7 +241,8 @@ def fit_model(args, adata, model, inputs, tensor_v, xyids=None, device=None):
                 v_rg_wt=args.v_rg_wt,   
                 fit_offset=args.fit_offset_train,         
                 device=device,
-                norm_lr=args.use_norm
+                norm_lr=args.use_norm,
+                mask=mask,
                 )
 
         losses.append(loss)
@@ -391,9 +414,11 @@ def train_step_AE(Xs,
                   rt_all_loss=False, 
                   perc=[5, 95], 
                   smoothl1_beta=1.0, 
-                  v_rg_wt=1.0,
+                  v_rg_wt=0,
                   fit_offset=False,
-                  norm_lr=False):
+                  norm_lr=False,
+                  mask=1.0,
+                  ):
     """Conduct a train step.
     
     Args:
@@ -401,6 +426,7 @@ def train_step_AE(Xs,
         model (nn.Module): Instance of Autoencoder class
         optimizer (nn.optim.Optimizer): instance of pytorch Optimizer class
         xyids (list of int): indices of x
+        mask: (n by 1, Tensor): masking constraints for cells' velocities to hold or free.
     
     Returns:
         float: loss of this step.
@@ -415,8 +441,8 @@ def train_step_AE(Xs,
     lr_loss = 0
     if xyids:
         s, u = model.encoder(Xs[xyids[0]]), model.encoder(Xs[xyids[1]])
-        v    = (model.encoder(Xs[xyids[0]] + tensor_v) - model.encoder(Xs[xyids[0]] - tensor_v)) / 2 
-        # v    = model.encoder(Xs[xyids[0]] + tensor_v) - s
+        # v    = (model.encoder(Xs[xyids[0]] + tensor_v) - model.encoder(Xs[xyids[0]] - tensor_v)) / 2 
+        v    = model.encoder(Xs[xyids[0]] + tensor_v) - s
         offset, gamma, vloss = leastsq_pt(
                               s, u,
                               fit_offset=fit_offset,
@@ -424,7 +450,10 @@ def train_step_AE(Xs,
                               device=device,
                               norm=norm_lr
                               )
-        vloss = torch.sum(vloss) * aux_weight + torch.nn.functional.smooth_l1_loss(u - gamma * s - offset, v, beta=smoothl1_beta) * v_rg_wt
+        vloss = torch.sum(vloss) * aux_weight 
+        if v_rg_wt > 0:
+            preds = mask * (u - gamma * s - offset)
+            vloss = vloss + torch.nn.functional.smooth_l1_loss(preds, v * mask, beta=smoothl1_beta) * v_rg_wt
         lr_loss = vloss.item()
         loss += vloss
         
