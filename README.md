@@ -1,4 +1,4 @@
->2022/04/29 We thank [@Mingze Yuan](https://github.com/zhazhaze) from PKU for his great insights in correcting issues regarding veloAE's cohort aggregation module and a suggestion on replacing GCN with GAT layers, which leads to better performances on challenging datasets like human and mouse bonemarrow, an overview of updated results:
+>2022/04/29 Version Updating in progress. We thank [@Mingze Yuan](https://github.com/zhazhaze) from PKU for his great insights in correcting issues regarding veloAE's cohort aggregation module and a suggestion on replacing GCN with GAT layers, which leads to better performances on challenging datasets like human and mouse bonemarrow, a preview of updated results:
 
 ![](https://github.com/qiaochen/VeloAE/blob/main/veloAE2.0.png?raw=true)
 
