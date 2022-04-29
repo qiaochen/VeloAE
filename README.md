@@ -1,6 +1,8 @@
+>2022/04/29 VeloAE updated to 0.2.0. The folder `notebooks` is reorganized and only notebooks involving veloAE experiments are kept, with scvelo dynamical mode enrolled for comparison. The previous data are backuped in the branch [`paper-version-backup`](https://github.com/qiaochen/VeloAE/tree/paper-version-backup)
+
 >2022/04/29 Version Updating in progress. We thank [@Mingze Yuan](https://github.com/zhazhaze) from PKU for his great insights in correcting issues regarding veloAE's cohort aggregation module and a suggestion on replacing GCN with GAT layers, which leads to better performances on challenging datasets like human and mouse bonemarrow, a preview of updated results:
 
-![](https://github.com/qiaochen/VeloAE/blob/main/veloAE2.0.png?raw=true)
+![](https://github.com/qiaochen/VeloAE/blob/main/veloAE_pre_results.0.2.0.png?raw=true)
 
 >Exciting news 2022/04/04! [UnitTVelo](https://github.com/StatBiomed/UniTVelo), a new single cell RNA velocity estimation tool that addresses the challenging datasets of existing tools is published by our lab.
 
