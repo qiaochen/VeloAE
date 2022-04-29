@@ -15,9 +15,10 @@ import argparse
 
 from matplotlib import pyplot as plt
 from sklearn.decomposition import PCA
-from .model import leastsq_pt
+from .model import leastsq_pt, CANO_NAME_GAT, CANO_NAME_GCN
 from .baseline import leastsq_np
 
+scv.settings.verbosity = 0
 
 def get_parser():
     """Get the argument parser
@@ -38,14 +39,54 @@ def get_parser():
     parser.add_argument('--exp-name', type=str, default="experiment", metavar='PATH',
                         help='name of the experiment')
     parser.add_argument('--adata', type=str, metavar='PATH', 
-                        help="""path to the Anndata file with transcriptom, spliced and unspliced
+                        help="""path to the Anndata file with transcriptome, spliced and unspliced
                                 mRNA expressions, the adata should be already preprocessed and with
                                 velocity estimated in the original space."""
+                       )
+    parser.add_argument('--mask_cluster_list', type=str, metavar='PATH', default=None,
+                        help="""Used in coorporation with v_rg_wt. path to the text file listing all the cell clusters which you would 
+                             like to keep similarly estimated using veloAE in the low-dimensional space as 
+                             a simple projection of raw velocity (e.g., velocity estimated via scvelo dynamic mode/stochastic mode) 
+                             The first line of the file should specify the column name of adata.obs to locate the cluster annotations.
+                             ."""
                        )
     parser.add_argument('--use_x', type=bool, default=False,
                         help="""whether or not to enroll transcriptom reads for training 
                                 (default: False)."""
                        )
+    parser.add_argument('--fit_offset_train', type=bool, default=False,
+                        help="""whether or not to fit offset for linear regression 
+                                (default: False)."""
+                       ) 
+    parser.add_argument('--fit_offset_pred', type=bool, default=False,
+                        help="""whether or not to fit offset for velocity estimation
+                                (default: False)."""
+                       ) 
+    parser.add_argument('--use_offset_pred', type=bool, default=False,
+                        help="""whether or not to use offset for velocity estimation
+                                (default: False)."""
+                       )                         
+    parser.add_argument('--gnn_layer', type=str, default='GAT',
+                        help="""Type of Graph Neural Network Layers to use for cohort aggregation,
+                                current options: GAT (Graph Attention Network) and GCN (Graph Convolutional Network)
+                                (default: GAT)."""
+                       )
+    parser.add_argument('--use_norm', type=bool, default=False,
+                        help="""whether or not to normalize low-dim s and u for velocity estimation
+                                (default: False)."""
+                       )                                                                                         
+    parser.add_argument('--sl1_beta', type=float, default=1.0,
+                        help="""beta parameter of smoothl1 loss (default: 1.0). Used in coorperation with v_rg_wt for low-dim velocity constraint"""
+                       )
+    parser.add_argument('--v_rg_wt', type=float, default=0.0,
+                        help="""Regularization weight of velocity constraint (default: 0)."""
+                       ) 
+    parser.add_argument('--n_nb_newadata', type=int, default=30,
+                        help="""Number of neighbors in new adata (default: 30)."""
+                       )  
+    parser.add_argument('--scv_n_jobs', type=int, default=None,
+                        help="""Number of jobs to use in scvelo operations (default: None)."""
+                       )                                                                  
     # parser.add_argument('--use_s', type=bool, default=True,
     #                     help="""whether or not to enroll spliced mRNA reads for training 
     #                             (default: True)."""
@@ -54,9 +95,9 @@ def get_parser():
     #                     help="""whether or not to enroll unspliced mRNA reads for training 
     #                             (default: True)."""
     #                    )
-    parser.add_argument('--refit', type=int, default=1,
+    parser.add_argument('--refit', type=bool, default=True,
                         help="""whether or not refitting veloAE, if False, need to provide
-                                a fitted model for velocity projection. (default=1)
+                                a fitted model for velocity projection. (default=True)
                              """
                        )
     parser.add_argument('--output', type=str, default="./",
@@ -65,8 +106,13 @@ def get_parser():
     parser.add_argument('--vis-key', type=str, default="X_umap",
                         help="Key to visualization embeddings in adata.obsm (default: X_umap)"
                        )
+    parser.add_argument('--vis_type_col', type=str, default=None,
+                        help="Key to cell type in adata.obs for coloring plots (default: None)"
+                       )                   
     parser.add_argument('--z-dim', type=int, default=100,
                         help='dimentionality of the hidden representation Z (default: 100)')
+    parser.add_argument('--n_conn_nb', type=int, default=30,
+                        help='Number of neighbors for GCN adjacency matrix (default: 30)')
     parser.add_argument('--g-rep-dim', type=int, default=100,
                         help='dimentionality of gene representation (default: 256)')
     parser.add_argument('--h-dim', type=int, default=256,
@@ -98,6 +144,10 @@ def get_parser():
                         help='specify data used to construct neighborhood graph, "XSU" indicates using \
                              transpriptome, spliced and unspliced counts, "SU" indicates only the latter \
                              two, "X" indicates only use the transcriptome (default: SU)')
+    parser.add_argument('--ld_nb_g_src', type=str, default="X",
+                        help='specify data used to construct neighborhood graph in the low-dimensional space, "XSU" indicates using \
+                             transpriptome, spliced and unspliced counts, "SU" indicates only the latter \
+                             two, "X" indicates only use the transcriptome (default: X).')                         
     parser.add_argument('--n_raw_gene', type=int, default=2000,
                         help='Number of genes to keep in the raw gene space (default: 2000)')
     parser.add_argument('--lr_decay', type=float, default=0.9,
@@ -148,12 +198,46 @@ def init_model(adata, args, device):
                      g_rep_dim=args.g_rep_dim,
                      gb_tau=args.gumbsoft_tau,
                      g_basis=args.nb_g_src,
+                     n_conn_nb=args.n_conn_nb,
+                     gnn_layer=args.gnn_layer,
                      device=device
                     )
     return model
 
 
-def fit_model(args, adata, model, inputs, xyids=None, device=None):
+def get_mask(path, adata):
+    """Get mask from external file or 1 for each cell type.
+       Masking cell types for low-dimensional velocity constraints.
+       Those masked types will be constrained in an auxiliary loss
+       such that the projected velocity via AutoEncoder is close to 
+       the low-dimensional velocities estimated using projected spliced
+       and unspliced reads.
+
+    Args:
+        path (str): Path to masking file, file with first line indicating
+                    column key for indexing celltypes in anndata.obs dataframe.
+        adata (Anndata): Anndata object
+        
+    Returns:
+        array[bool]: boolean mask for cells of designated types
+    """
+    if path is None:
+        return 1
+    if not os.path.exists(path):
+        raise Exception(f"Can't open {path}, does is exist?")
+    with open(path, 'r') as infile:
+        lines = [line.strip() for line in infile]
+    obs_col = lines[0]
+    types = lines[1:]
+    sel = np.zeros(adata.n_obs, dtype=int)
+    for t_name in types:
+        sel[adata.obs[obs_col].values == t_name] = 1
+    if sel.sum() == 0:
+        print("Note: No Masked cells although maksing is invoked!!")
+    return sel
+
+
+def fit_model(args, adata, model, inputs, tensor_v=None, xyids=None, device=None):
     """Fit a velo autoencoder
     
     Args:
@@ -161,6 +245,9 @@ def fit_model(args, adata, model, inputs, xyids=None, device=None):
         adata (Anndata): Anndata object
         model (nn.Module): VeloAE instance
         inputs (list of tensors): inputs for training VeloAE, e.g., [x, s, u]
+        tensor_v (torch.FloatTensor): optional input for low-dim velocity constrain
+        xyids (list if int): index independent (0) and dependent (1) variables for regression.
+        device (torch.device): device instance
     
     Returns:
         nn.Module: Fitted model.
@@ -172,18 +259,28 @@ def fit_model(args, adata, model, inputs, xyids=None, device=None):
     i, losses = 0, [sys.maxsize]  
     min_loss = losses[-1]
     model_saved = False
-
+    mask = torch.LongTensor(get_mask(args.mask_cluster_list, adata)).view(-1, 1).to(device)
     model.train()
     while i < args.n_epochs:
         i += 1
-        loss = train_step_AE(inputs, 
+
+        loss = train_step_AE(
+                inputs, 
+                tensor_v,
                 model, optimizer, 
                 xyids=xyids, 
                 aux_weight=args.aux_weight,
+                smoothl1_beta=args.sl1_beta, 
+                v_rg_wt=args.v_rg_wt,   
+                fit_offset=args.fit_offset_train,         
                 device=device,
+                norm_lr=args.use_norm,
+                mask=mask,
                 )
 
+        torch.cuda.empty_cache()
         losses.append(loss)
+
         if i % args.log_interval == 0:
             if losses[-1] < min_loss:
                 min_loss = losses[-1]
@@ -212,8 +309,6 @@ def do_projection(model,
                   tensor_x, 
                   tensor_s, 
                   tensor_u, 
-                  tensor_v,
-                  color=None,
                   device=None
                  ):
     """Project everything into the low-dimensional space
@@ -225,7 +320,7 @@ def do_projection(model,
         tensor_x (FloatTensor): transcriptom expressions.
         tensor_s (FloatTensor): spliced mRNA expressions.
         tensor_u (FloatTensor): unspliced mRNA expressions.
-        tensor_v (FloatTensor): Velocity in the raw dimensional space.
+        device (torch.device): device instance
         
     Returns:
         Anndata: Anndata object in the latent space.
@@ -236,19 +331,29 @@ def do_projection(model,
         x = model.encoder(tensor_x)
         s = model.encoder(tensor_s)
         u = model.encoder(tensor_u)
-        v = estimate_ld_velocity(s, u, device=device, perc=[5, 95], norm=False).cpu().numpy()
+        v = estimate_ld_velocity(s, u, 
+                               device=device, perc=[5, 95], 
+                               norm=args.use_norm, 
+                               fit_offset=args.fit_offset_pred,
+                               use_offset=args.use_offset_pred,
+                               ).cpu().numpy()
         x = x.cpu().numpy()
         s = s.cpu().numpy()
         u = u.cpu().numpy()
 
     ld_adata = new_adata(adata, x, s, u, v, new_v_key="velocity", 
                         X_emb_key=args.vis_key,
-                        g_basis=args.nb_g_src)
-    scv.tl.velocity_graph(ld_adata, vkey='velocity')
+                        g_basis=args.ld_nb_g_src,
+                        n_nb_newadata=args.n_nb_newadata,
+    )
+    scv.tl.velocity_graph(ld_adata, vkey='velocity', n_jobs=args.scv_n_jobs)
+
+    color = args.vis_type_col in ld_adata.obs
     if color:
         scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
                                     title="Low-dimensional Celluar Transition Map",
-                                    color=color
+                                    color=args.vis_type_col,
+                                    save='colored_velo_projection.png'
                                     )
     else:
         scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
@@ -276,7 +381,7 @@ def init_adata(args, adata=None):
     return adata
 
 
-def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU"):
+def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU", n_nb=30):
     """Construct neighborhood graph for target adata using expression data 
     from source data.
 
@@ -290,8 +395,8 @@ def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU"):
                   "U": src_adata.layers['unspliced']
                   }
     tgt_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
-    scv.pp.neighbors(tgt_adata, n_pcs=30, n_neighbors=30)
-    scv.pp.moments(tgt_adata, n_pcs=30, n_neighbors=30)
+    scv.pp.neighbors(tgt_adata, n_pcs=30, n_neighbors=n_nb)
+    scv.pp.moments(tgt_adata, n_pcs=30, n_neighbors=n_nb)
     return tgt_adata
 
     
@@ -299,6 +404,7 @@ def new_adata(adata, x, s, u, v=None,
               new_v_key="new_velocity", 
               X_emb_key="X_umap",
               g_basis="SU",
+              n_nb_newadata=30,
              ):
     """Copy a new Anndata object while keeping some original information.
     
@@ -325,7 +431,7 @@ def new_adata(adata, x, s, u, v=None,
     for key in adata.obs:
         new_adata.obs[key] = adata.obs[key].copy()
     
-    new_adata = construct_nb_graph_for_tgt(adata, new_adata, g_basis)
+    new_adata = construct_nb_graph_for_tgt(adata, new_adata, g_basis, n_nb=n_nb_newadata)
         
     for clr in [key for key in adata.uns if key.split("_")[-1] == 'colors' ]:
         new_adata.uns[clr] = adata.uns[clr]
@@ -334,14 +440,29 @@ def new_adata(adata, x, s, u, v=None,
     return new_adata
 
 
-def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0, rt_all_loss=False, perc=[5, 95], norm_lr=False):
+def train_step_AE(Xs,
+                  tensor_v,
+                  model, 
+                  optimizer, 
+                  xyids=None, 
+                  device=None, 
+                  aux_weight=1.0, 
+                  rt_all_loss=False, 
+                  perc=[5, 95], 
+                  smoothl1_beta=1.0, 
+                  v_rg_wt=0,
+                  fit_offset=False,
+                  norm_lr=False,
+                  mask=1.0,
+                  ):
     """Conduct a train step.
     
     Args:
         Xs (list[FloatTensor]): inputs for Autoencoder
         model (nn.Module): Instance of Autoencoder class
         optimizer (nn.optim.Optimizer): instance of pytorch Optimizer class
-        xyids (list of int): indices of x
+        xyids (list of int): indices of x, dependent 0th and independent 1st variables
+        mask: (n by 1, Tensor): masking constraints for cells' velocities to hold or free.
     
     Returns:
         float: loss of this step.
@@ -356,14 +477,20 @@ def train_step_AE(Xs, model, optimizer, xyids=None, device=None, aux_weight=1.0,
     lr_loss = 0
     if xyids:
         s, u = model.encoder(Xs[xyids[0]]), model.encoder(Xs[xyids[1]])
-        _, _, vloss = leastsq_pt(
+        # v    = (model.encoder(Xs[xyids[0]] + tensor_v) - model.encoder(Xs[xyids[0]] - tensor_v)) / 2 
+        
+        offset, gamma, vloss = leastsq_pt(
                               s, u,
-                              fit_offset=True, 
+                              fit_offset=fit_offset,
                               perc=perc,
                               device=device,
                               norm=norm_lr
                               )
-        vloss = torch.sum(vloss) * aux_weight
+        vloss = torch.sum(vloss) * aux_weight 
+        if v_rg_wt > 0:
+            v  = model.encoder(Xs[xyids[0]] + tensor_v) - s
+            preds = mask * (u - gamma * s - offset)
+            vloss = vloss + torch.nn.functional.smooth_l1_loss(preds, v * mask, beta=smoothl1_beta) * v_rg_wt
         lr_loss = vloss.item()
         loss += vloss
         
@@ -408,14 +535,16 @@ def sklearn_decompose(method, X, S, U, V, use_leastsq=True, norm_lr=False):
     return x, s, u, v
 
 
-def estimate_ld_velocity(s, u, device=None, perc=[5, 95], norm=False):
+def estimate_ld_velocity(s, u, device=None, perc=[5, 95], norm=False, fit_offset=False, use_offset=False):
     with torch.no_grad():
-        _, gamma, _ = leastsq_pt(s, u, 
+        offset, gamma, _ = leastsq_pt(s, u, 
+                                 fit_offset=fit_offset,
                                  device=device, 
                                  perc=perc,
                                  norm=norm
         )
-    return u - gamma * s
+        offset = offset if use_offset else 0
+    return u - gamma * s - offset
     
     
 def get_baseline_AE(in_dim, z_dim, h_dim, batchnorm=False):
@@ -468,7 +597,7 @@ def get_ablation_CohAgg(
     nb_indices = adata.uns['neighbors']['indices']
     xs, ys = np.repeat(range(adata.n_obs), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
     edge_weight = torch.FloatTensor(conn[xs,ys]).view(-1).to(device)
-    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), xs.reshape(1, -1)])).to(device)
+    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), ys.reshape(1, -1)])).to(device)
     model = AblationCohAgg(
         edge_index,
         edge_weight,
@@ -539,6 +668,8 @@ def get_veloAE(
              g_rep_dim=100,
              gb_tau=1.0,
              g_basis="SU",
+             n_conn_nb=30,
+             gnn_layer='GAT',
              device=None):
     """Instantiate a VeloAE object.
     
@@ -562,12 +693,12 @@ def get_veloAE(
     """
     from .model import VeloAutoencoder
     adata = adata.copy()
-    adata = construct_nb_graph_for_tgt(adata, adata, g_basis.upper())
+    adata = construct_nb_graph_for_tgt(adata, adata, g_basis.upper(), n_nb=n_conn_nb)
     conn = adata.obsp['connectivities']
     nb_indices = adata.uns['neighbors']['indices']
     xs, ys = np.repeat(range(n_cells), nb_indices.shape[1]-1), nb_indices[:, 1:].flatten()
     edge_weight = torch.FloatTensor(conn[xs,ys]).view(-1).to(device)
-    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), xs.reshape(1, -1)])).to(device)
+    edge_index = torch.LongTensor(np.vstack([xs.reshape(1,-1), ys.reshape(1, -1)])).to(device)
     model = VeloAutoencoder(
                 edge_index,
                 edge_weight,
@@ -580,6 +711,7 @@ def get_veloAE(
                 G_rep=G_embeddings,
                 g_rep_dim=g_rep_dim,
                 gb_tau=gb_tau,
+                gnn_layer=gnn_layer,
                 device=device
                 )
     return model.to(device)
