@@ -104,7 +104,7 @@ veloproj --lr 1e-5 --nb_g_src X --gumbsoft_tau 5 --fit_offset_pred true --vis_ty
     - An uncolored/colored figure showing the low-dimensional velocity field, stored in folder './figures'.
     - A plot showing the training loss curve named as `training_loss.png` in the output folder (default ./, can be specified using arg --output).
     
-    ![Example training loss (lr: 1e-5) figure, showing a fitted model. The loss converges before reaching the last epoch of training, so decrease the number of epochs to that of the early converging stage could save time.](https://raw.githubusercontent.com/qiaochen/VeloRep/rev/test/training_loss.png)
+    ![Example training loss (lr: 1e-5) figure, showing a fitted model. The loss converges before reaching the last epoch of training, so decrease the number of epochs to that of the early converging stage could save time.](https://github.com/qiaochen/VeloAE/blob/main/training_loss.png?raw=true)
     >If the training loss decreases smoothly but not converge after exhausting all the epochs, please try either more epochs or larger learning rates. Note, however, that learning rates should not be set too large to make the loss osciliates and never decreases.
 
 Use command line help to investigate more arguments.
