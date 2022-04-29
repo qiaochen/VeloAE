@@ -1,4 +1,4 @@
->2022/04/29 VeloAE updated to 0.2.0. The folder `notebooks` is reorganized and only notebooks involving veloAE experiments are kept, with scvelo dynamical mode enrolled for comparison. The previous data are backuped in the branch [`paper-version-backup`](https://github.com/qiaochen/VeloAE/tree/paper-version-backup)
+>2022/04/29 VeloAE updated to 0.2.0. To simplify the project, the folder `notebooks` is reorganized and only notebooks involving veloAE experiments are kept, scvelo dynamical mode models are additionally included for comparison. The previous data are backuped in the branch [`paper-version-backup`](https://github.com/qiaochen/VeloAE/tree/paper-version-backup)
 
 >2022/04/29 Version Updating in progress. We thank [@Mingze Yuan](https://github.com/zhazhaze) from PKU for his great insights in correcting issues regarding veloAE's cohort aggregation module and a suggestion on replacing GCN with GAT layers, which leads to better performances on challenging datasets like human and mouse bonemarrow, a preview of updated results:
 
@@ -33,6 +33,21 @@ Our revised manuscript is in progress, while the first version could be found in
 
 ```
 pip install git+https://github.com/qiaochen/VeloAE
+```
+
+#### An example local installation procedure in linux system
+
+```console
+conda create -n veloAE
+conda activate veloAE
+git clone https://github.com/qiaochen/VeloAE.git
+cd VeloAE
+conda install python=3.7
+pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+pip install torch-scatter -f https://data.pyg.org/whl/torch-1.11.0+cu113.html
+pip install torch-sparse -f https://data.pyg.org/whl/torch-1.11.0+cu113.html
+pip install torch-geometric
+pip install .
 ```
 
 ## Usage
