@@ -18,7 +18,7 @@ from sklearn.decomposition import PCA
 from .model import leastsq_pt, CANO_NAME_GAT, CANO_NAME_GCN
 from .baseline import leastsq_np
 
-
+scv.settings.verbosity = 0
 
 def get_parser():
     """Get the argument parser
@@ -352,7 +352,7 @@ def do_projection(model,
     if color:
         scv.pl.velocity_embedding_stream(ld_adata, vkey="velocity", basis=args.vis_key,
                                     title="Low-dimensional Celluar Transition Map",
-                                    color=args.vis_type_col
+                                    color=args.vis_type_col,
                                     save='colored_velo_projection.png'
                                     )
     else:
