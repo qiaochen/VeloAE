@@ -71,8 +71,7 @@ def main():
                              args,
                              tensor_x, 
                              tensor_s, 
-                             tensor_u, 
-                             tensor_v,
+                             tensor_u,
                              device=device)
     logger.info("Finished projection...")
     logger.info(f"{(timeit.default_timer() - start_time)/60:.2}min passed.")

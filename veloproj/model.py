@@ -11,6 +11,9 @@ from torch import nn
 from torch_geometric.nn import GCNConv, Sequential, GATv2Conv, GATConv
 from torch.nn import functional as F
 
+CANO_NAME_GAT='GAT'
+CANO_NAME_GCN='GCN'
+
 
 class Encoder(nn.Module):
     """Encoder
@@ -22,7 +25,7 @@ class Encoder(nn.Module):
                  edge_index,
                  edge_weight,
                  h_dim=256,
-                 use_gcn=False,
+                 gnn_layer=CANO_NAME_GAT,
                 ):
         """
         Args:
@@ -31,6 +34,7 @@ class Encoder(nn.Module):
             edge_index (LongTensor): shape (2, ?), edge indices
             edge_weight (FloatTensor): shape (?), edge weights.
             h_dim (int): dimensionality of intermediate layers in MLP
+            gnn_layer (str): GNN layers in {'GAT', 'GCN'}
             
         """
         super(Encoder, self).__init__()
@@ -42,27 +46,30 @@ class Encoder(nn.Module):
             nn.Linear(h_dim, h_dim, bias=True),
             nn.GELU(),
         )
-        if use_gcn:
+
+        if not gnn_layer.upper() in {CANO_NAME_GCN, CANO_NAME_GAT}:
+            raise Exception(f"GNN layer {gnn_layer} is not supported!")
+
+        if gnn_layer.upper() == CANO_NAME_GCN:
             self.gc = Sequential( "x, edge_index, edge_weight", 
                 [(GCNConv(h_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
-                #   nn.BatchNorm1d(z_dim),
                 nn.GELU(),
                 (GCNConv(z_dim, z_dim, cached=False, add_self_loops=True), "x, edge_index, edge_weight -> x"),
-                #   nn.BatchNorm1d(z_dim),
                 nn.GELU(),
                 nn.Linear(z_dim, z_dim)]
             )
-        # GATv2Conv
-        else:
+        # GATConv
+        if gnn_layer.upper() == CANO_NAME_GAT:
             self.gc = Sequential( "x, edge_index, edge_weight", 
                 [ (GATConv(h_dim, z_dim,  add_self_loops=True), "x, edge_index -> x"),
-                #   nn.BatchNorm1d(z_dim),
                 nn.GELU(),            
-                #   nn.BatchNorm1d(z_dim),
                 (GATConv(z_dim, z_dim,  add_self_loops=True), "x, edge_index -> x"),
                 nn.GELU(),
                 nn.Linear(z_dim, z_dim)]
             )
+            del self.edge_weight
+            self.edge_weight = None
+
         self.gen = nn.Sequential(
             nn.Linear(z_dim, z_dim, bias=True)
         )
@@ -223,6 +230,7 @@ class AblationCohAgg(nn.Module):
                in_dim,
                z_dim,
                h_dim=256,
+               gnn_layer=CANO_NAME_GAT,
                device=None
               ):
         """
@@ -232,12 +240,13 @@ class AblationCohAgg(nn.Module):
             in_dim (int): dimensionality of the input
             z_dim (int): dimensionality of the low-dimensional space
             h_dim (int): dimensionality of intermediate layers in MLP
+            gnn_layer (str): GNN layers in {'GAT', 'GCN'}
             device (torch.device): torch device object.
             
         """
         super(AblationCohAgg, self).__init__()
         self.device = device
-        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim)
+        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim, gnn_layer=gnn_layer)
         self.decoder = AblationDecoder(z_dim, in_dim, h_dim)
         self.criterion = nn.MSELoss(reduction='mean')
         
@@ -312,7 +321,7 @@ class VeloAutoencoder(nn.Module):
                G_rep=None,
                g_rep_dim=None,
                gb_tau=1.0,
-               use_gcn=False,
+               gnn_layer=CANO_NAME_GAT,
                device=None
               ):
         """
@@ -331,12 +340,13 @@ class VeloAutoencoder(nn.Module):
                 # Either G_rep or (n_genes, g_rep_dim) should be provided.
                 # priority is given to G_rep.
             gb_tau (float): temperature parameter for gumbel softmax,
+            gnn_layer (str): GNN layers in {'GAT', 'GCN'}
             device (torch.device): torch device object.
             
         """
         super(VeloAutoencoder, self).__init__()
         self.device = device
-        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim, use_gcn=use_gcn)
+        self.encoder = Encoder(in_dim, z_dim, edge_index, edge_weight, h_dim=h_dim, gnn_layer=gnn_layer)
         self.decoder = Decoder(n_cells, G_rep, n_genes, g_rep_dim, k_dim, h_dim, gb_tau, device)
         self.criterion = nn.MSELoss(reduction='mean')
         
@@ -354,6 +364,7 @@ def get_mask_pt(x, y=None, perc=[5, 95], device=None):
         x (Tensor): Splicing counts projection
         y (Tensor): Unsplicing counts projection
         perc (int): percentile
+        device (torch.device): GPU/CPU device object
     return:
         mask (Tensor): bool matrix
     """
@@ -386,9 +397,10 @@ def leastsq_pt(x, y, fit_offset=True, constraint_positive_offset=False,
         x (Tensor): low-dim splicing projection
         y (Tensor): low-dim unsplicing projection
         fit_offset (bool): whether fit offset
-        constraint_positive_offset (bool): whether make non-negative offset
+        constraint_positive_offset (bool): whether to make non-negative offset
         perc (int or list of int): percentile threshold for points in regression
         device (torch.device): GPU/CPU device object
+        norm (bool): whether or not to normalize x, y
 
     returns:
         fitted offset, gamma and MSE losses
