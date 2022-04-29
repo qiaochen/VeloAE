@@ -7,11 +7,11 @@ from setuptools import setup
 
 setup(
         name='veloAE',
-        version='0.0.2',
+        version='0.2.0',
         description='Autoencoding single cell velocity',
         author='Chen Qiao',
         author_email='cqiao@connect.hku.hk',
-        url='https://github.com/qiaochen/VeloRep',
+        url='https://github.com/qiaochen/VeloAE',
         packages=['veloproj'],
         entry_points = {
             "console_scripts": ['veloproj = veloproj.veloproj:main']

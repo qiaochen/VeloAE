@@ -17,6 +17,7 @@ def main():
     
     parser = get_parser()
     args = parser.parse_args()
+    logger.info(args)
     
     torch.manual_seed(args.seed)
     random.seed(args.seed)
@@ -52,7 +53,7 @@ def main():
     if args.use_x:
         inputs.append(tensor_x)
     
-    if args.refit == 1:
+    if args.refit:
         logger.info("Fitting model...")
         model = fit_model(args, adata, model, inputs, tensor_v, xyids, device)
         logger.info("Finished model fitting.")

@@ -14,6 +14,7 @@ import scanpy as sc
 import argparse
 
 from matplotlib import pyplot as plt
+from distutils.util import strtobool
 from sklearn.decomposition import PCA
 from .model import leastsq_pt, CANO_NAME_GAT, CANO_NAME_GCN
 from .baseline import leastsq_np
@@ -50,30 +51,30 @@ def get_parser():
                              The first line of the file should specify the column name of adata.obs to locate the cluster annotations.
                              ."""
                        )
-    parser.add_argument('--use_x', type=bool, default=False,
+    parser.add_argument('--use_x', type=lambda x: bool(strtobool(x)), default=False,
                         help="""whether or not to enroll transcriptom reads for training 
-                                (default: False)."""
+                                (default: false)."""
                        )
-    parser.add_argument('--fit_offset_train', type=bool, default=False,
+    parser.add_argument('--fit_offset_train', type=lambda x: bool(strtobool(x)), default=False,
                         help="""whether or not to fit offset for linear regression 
-                                (default: False)."""
+                                (default: false)."""
                        ) 
-    parser.add_argument('--fit_offset_pred', type=bool, default=False,
+    parser.add_argument('--fit_offset_pred', type=lambda x: bool(strtobool(x)), default=False,
                         help="""whether or not to fit offset for velocity estimation
-                                (default: False)."""
+                                (default: false)."""
                        ) 
-    parser.add_argument('--use_offset_pred', type=bool, default=False,
+    parser.add_argument('--use_offset_pred', type=lambda x: bool(strtobool(x)), default=False,
                         help="""whether or not to use offset for velocity estimation
-                                (default: False)."""
+                                (default: false)."""
                        )                         
     parser.add_argument('--gnn_layer', type=str, default='GAT',
                         help="""Type of Graph Neural Network Layers to use for cohort aggregation,
                                 current options: GAT (Graph Attention Network) and GCN (Graph Convolutional Network)
                                 (default: GAT)."""
                        )
-    parser.add_argument('--use_norm', type=bool, default=False,
+    parser.add_argument('--use_norm', type=lambda x: bool(strtobool(x)), default=False,
                         help="""whether or not to normalize low-dim s and u for velocity estimation
-                                (default: False)."""
+                                (default: false)."""
                        )                                                                                         
     parser.add_argument('--sl1_beta', type=float, default=1.0,
                         help="""beta parameter of smoothl1 loss (default: 1.0). Used in coorperation with v_rg_wt for low-dim velocity constraint"""
@@ -95,9 +96,9 @@ def get_parser():
     #                     help="""whether or not to enroll unspliced mRNA reads for training 
     #                             (default: True)."""
     #                    )
-    parser.add_argument('--refit', type=bool, default=True,
+    parser.add_argument('--refit', type=lambda x: bool(strtobool(x)), default=True,
                         help="""whether or not refitting veloAE, if False, need to provide
-                                a fitted model for velocity projection. (default=True)
+                                a fitted model for velocity projection. (default=true)
                              """
                        )
     parser.add_argument('--output', type=str, default="./",
@@ -114,11 +115,11 @@ def get_parser():
     parser.add_argument('--n_conn_nb', type=int, default=30,
                         help='Number of neighbors for GCN adjacency matrix (default: 30)')
     parser.add_argument('--g-rep-dim', type=int, default=100,
-                        help='dimentionality of gene representation (default: 256)')
+                        help='dimentionality of gene representation (default: 100)')
     parser.add_argument('--h-dim', type=int, default=256,
                         help='dimentionality of intermedeate layers of MLP (default: 256)')
-    parser.add_argument('--k-dim', type=int, default=50,
-                        help='dimentionality of attention keys/queries (default: 50)')
+    parser.add_argument('--k-dim', type=int, default=100,
+                        help='dimentionality of attention keys/queries (default: 100)')
     parser.add_argument('--conv-thred', type=float, default=1e-6,
                         help='convergence threshold of early-stopping (default: 1e-6)')
     parser.add_argument('--n-epochs', type=int, default=20000, metavar='N',
@@ -669,7 +670,7 @@ def get_veloAE(
              gb_tau=1.0,
              g_basis="SU",
              n_conn_nb=30,
-             gnn_layer='GAT',
+             gnn_layer=CANO_NAME_GAT,
              device=None):
     """Instantiate a VeloAE object.
     
