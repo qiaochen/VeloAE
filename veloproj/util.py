@@ -309,7 +309,7 @@ def fit_model(args, adata, model, inputs, tensor_v=None, xyids=None, device=None
                     )
             scaler.update()
 
-        torch.cuda.empty_cache()
+        # torch.cuda.empty_cache()
         losses.append(loss)
         pbar.set_description(f"Loss: {losses[-1]:.6f}")
         if i % args.log_interval == 0:
