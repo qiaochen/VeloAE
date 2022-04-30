@@ -1,5 +1,0 @@
-name: tmp
-channels:
-  - conda-forge
-  - defaults
-prefix: /data/users/cqiao/anaconda3/envs/tmp
