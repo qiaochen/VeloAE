@@ -369,15 +369,15 @@ def get_mask_pt(x, y=None, perc=[5, 95], device=None):
         mask (Tensor): bool matrix
     """
     with torch.no_grad():
-        xy_norm = torch.clone(x)
+        xy_norm = torch.clone(x).float()
         if y is not None:
-            y = torch.clone(y)
+            y = torch.clone(y).float()
             xy_norm = xy_norm / torch.clip(torch.max(xy_norm, axis=0).values - torch.min(xy_norm, axis=0).values, 1e-3, None)
             xy_norm += y / torch.clip(torch.max(y, axis=0).values - torch.min(y, axis=0).values, 1e-3, None)
         if isinstance(perc, int):
-            mask = xy_norm >= torch.quantile(xy_norm, perc/100, dim=0)
+            mask = xy_norm >= torch.nanquantile(xy_norm, perc/100, dim=0)
         else:
-            lb, ub = torch.quantile(xy_norm, torch.Tensor(perc).to(device)/100, dim=0, keepdim=True)
+            lb, ub = torch.nanquantile(xy_norm, torch.Tensor(perc).to(device)/100, dim=0, keepdim=True)
             mask = (xy_norm <= lb) | (xy_norm >= ub)
     return mask
 

@@ -55,7 +55,7 @@ def main():
     
     if args.refit:
         logger.info("Fitting model...")
-        model = fit_model(args, adata, model, inputs, tensor_v, xyids, device)
+        model = fit_model(args, adata, model, inputs, tensor_v, xyids, device, is_half=args.is_half)
         logger.info("Finished model fitting.")
         logger.info(f"{(timeit.default_timer() - start_time)/60:.2}min passed.")
     else:

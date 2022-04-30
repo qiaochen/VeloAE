@@ -13,6 +13,7 @@ import scvelo as scv
 import scanpy as sc
 import argparse
 
+from tqdm import tqdm
 from matplotlib import pyplot as plt
 from distutils.util import strtobool
 from sklearn.decomposition import PCA
@@ -66,7 +67,11 @@ def get_parser():
     parser.add_argument('--use_offset_pred', type=lambda x: bool(strtobool(x)), default=False,
                         help="""whether or not to use offset for velocity estimation
                                 (default: false)."""
-                       )                         
+                       )
+    parser.add_argument('--is_half', type=lambda x: bool(strtobool(x)), default=False,
+                        help="""whether or not to use mixture precision mode for model fitting 
+                                (default: false)."""
+                       )                                         
     parser.add_argument('--gnn_layer', type=str, default='GAT',
                         help="""Type of Graph Neural Network Layers to use for cohort aggregation,
                                 current options: GAT (Graph Attention Network) and GCN (Graph Convolutional Network)
@@ -238,7 +243,7 @@ def get_mask(path, adata):
     return sel
 
 
-def fit_model(args, adata, model, inputs, tensor_v=None, xyids=None, device=None):
+def fit_model(args, adata, model, inputs, tensor_v=None, xyids=None, device=None, is_half=False):
     """Fit a velo autoencoder
     
     Args:
@@ -253,37 +258,62 @@ def fit_model(args, adata, model, inputs, tensor_v=None, xyids=None, device=None
     Returns:
         nn.Module: Fitted model.
     """
+    scaler = None
     optimizer = torch.optim.AdamW(model.parameters(), 
                                   lr=args.lr, 
                                   weight_decay=args.weight_decay)
+    if device.type == 'cuda' and is_half:
+        scaler = torch.cuda.amp.GradScaler()
+        optimizer = torch.optim.SGD(model.parameters(), 
+                           lr=args.lr, 
+                           momentum=0.9,
+                           )
     lr = args.lr  
-    i, losses = 0, [sys.maxsize]  
+    losses = [sys.maxsize]  
     min_loss = losses[-1]
     model_saved = False
     mask = torch.LongTensor(get_mask(args.mask_cluster_list, adata)).view(-1, 1).to(device)
     model.train()
-    while i < args.n_epochs:
-        i += 1
+    pbar = tqdm(range(args.n_epochs))
+    for iter in pbar:
+        i = 1 + iter
 
-        loss = train_step_AE(
-                inputs, 
-                tensor_v,
-                model, optimizer, 
-                xyids=xyids, 
-                aux_weight=args.aux_weight,
-                smoothl1_beta=args.sl1_beta, 
-                v_rg_wt=args.v_rg_wt,   
-                fit_offset=args.fit_offset_train,         
-                device=device,
-                norm_lr=args.use_norm,
-                mask=mask,
-                )
+        if scaler is None:
+            loss = train_step_AE(
+                    inputs, 
+                    tensor_v,
+                    model, optimizer, 
+                    xyids=xyids, 
+                    aux_weight=args.aux_weight,
+                    smoothl1_beta=args.sl1_beta, 
+                    v_rg_wt=args.v_rg_wt,   
+                    fit_offset=args.fit_offset_train,         
+                    device=device,
+                    norm_lr=args.use_norm,
+                    mask=mask,
+                    )
+        else:
+            loss = train_step_AE_half(
+                    inputs, 
+                    tensor_v,
+                    model, optimizer, 
+                    xyids=xyids, 
+                    aux_weight=args.aux_weight,
+                    smoothl1_beta=args.sl1_beta, 
+                    v_rg_wt=args.v_rg_wt,   
+                    fit_offset=args.fit_offset_train,         
+                    device=device,
+                    norm_lr=args.use_norm,
+                    mask=mask,
+                    half_scaler=scaler,
+                    )
+            scaler.update()
 
         torch.cuda.empty_cache()
         losses.append(loss)
-
+        pbar.set_description(f"Loss: {losses[-1]:.6f}")
         if i % args.log_interval == 0:
-            if losses[-1] < min_loss:
+            if (not np.isnan(losses[-1])) and (losses[-1] < min_loss):
                 min_loss = losses[-1]
                 torch.save(model.state_dict(), args.model_name)
                 model_saved = True
@@ -295,8 +325,7 @@ def fit_model(args, adata, model, inputs, tensor_v=None, xyids=None, device=None
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = lr
 
-            print("Train Epoch: {:2d}/{:2d} \tLoss: {:.6f}"
-                  .format(i, args.n_epochs, losses[-1]))
+            
 
     plt.plot(losses[1:])
     plt.savefig(os.path.join(args.output, "training_loss.png"))
@@ -500,6 +529,70 @@ def train_step_AE(Xs,
     if rt_all_loss:
         return loss.item(), ae_loss, lr_loss
     return loss.item()
+
+def train_step_AE_half(Xs,
+                  tensor_v,
+                  model, 
+                  optimizer, 
+                  half_scaler,
+                  xyids=None, 
+                  device=None, 
+                  aux_weight=1.0, 
+                  rt_all_loss=False, 
+                  perc=[5, 95], 
+                  smoothl1_beta=1.0, 
+                  v_rg_wt=0,
+                  fit_offset=False,
+                  norm_lr=False,
+                  mask=1.0                  
+                  ):
+    """Conduct a train step.
+    
+    Args:
+        Xs (list[FloatTensor]): inputs for Autoencoder
+        model (nn.Module): Instance of Autoencoder class
+        optimizer (nn.optim.Optimizer): instance of pytorch Optimizer class
+        xyids (list of int): indices of x, dependent 0th and independent 1st variables
+        mask: (n by 1, Tensor): masking constraints for cells' velocities to hold or free.
+    
+    Returns:
+        float: loss of this step.
+        
+    """
+    optimizer.zero_grad()
+    loss = 0
+
+    with torch.cuda.amp.autocast():
+        for X in Xs:
+            loss = loss + model(X)
+
+        ae_loss = loss.item()
+        lr_loss = 0
+        if xyids:
+            s, u = model.encoder(Xs[xyids[0]]), model.encoder(Xs[xyids[1]])
+            # v    = (model.encoder(Xs[xyids[0]] + tensor_v) - model.encoder(Xs[xyids[0]] - tensor_v)) / 2 
+            
+            offset, gamma, vloss = leastsq_pt(
+                                s, u,
+                                fit_offset=fit_offset,
+                                perc=perc,
+                                device=device,
+                                norm=norm_lr
+                                )
+            vloss = torch.sum(vloss) * aux_weight 
+            if v_rg_wt > 0:
+                v  = model.encoder(Xs[xyids[0]] + tensor_v) - s
+                preds = mask * (u - gamma * s - offset)
+                vloss = vloss + torch.nn.functional.smooth_l1_loss(preds, v * mask, beta=smoothl1_beta) * v_rg_wt
+            lr_loss = vloss.item()
+            loss += vloss
+        
+    half_scaler.scale(loss).backward()
+    half_scaler.step(optimizer)
+    
+    if rt_all_loss:
+        return loss.item(), ae_loss, lr_loss
+    return loss.item()    
 
 
 def sklearn_decompose(method, X, S, U, V, use_leastsq=True, norm_lr=False):
