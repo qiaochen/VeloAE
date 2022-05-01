@@ -230,7 +230,7 @@ def get_mask(path, adata):
     if path is None:
         return 1
     if not os.path.exists(path):
-        raise Exception(f"Can't open {path}, does is exist?")
+        raise Exception(f"Can't open {path}, does it exist?")
     with open(path, 'r') as infile:
         lines = [line.strip() for line in infile]
     obs_col = lines[0]
@@ -239,7 +239,7 @@ def get_mask(path, adata):
     for t_name in types:
         sel[adata.obs[obs_col].values == t_name] = 1
     if sel.sum() == 0:
-        print("Note: No Masked cells although maksing is invoked!!")
+        print("Note: No Masked cells although masking is invoked!!")
     return sel
 
 
@@ -520,7 +520,7 @@ def train_step_AE(Xs,
         if v_rg_wt > 0:
             v  = model.encoder(Xs[xyids[0]] + tensor_v) - s
             preds = mask * (u - gamma * s - offset)
-            vloss = vloss + torch.nn.functional.smooth_l1_loss(preds, v * mask, beta=smoothl1_beta) * v_rg_wt
+            vloss = vloss + v_rg_wt * torch.nn.functional.smooth_l1_loss(preds, v * mask, beta=smoothl1_beta) * v_rg_wt
         lr_loss = vloss.item()
         loss += vloss
         
@@ -583,7 +583,7 @@ def train_step_AE_half(Xs,
             if v_rg_wt > 0:
                 v  = model.encoder(Xs[xyids[0]] + tensor_v) - s
                 preds = mask * (u - gamma * s - offset)
-                vloss = vloss + torch.nn.functional.smooth_l1_loss(preds, v * mask, beta=smoothl1_beta) * v_rg_wt
+                vloss = vloss + v_rg_wt * torch.nn.functional.smooth_l1_loss(preds, v * mask, beta=smoothl1_beta) * v_rg_wt
             lr_loss = vloss.item()
             loss += vloss
         
