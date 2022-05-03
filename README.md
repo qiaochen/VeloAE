@@ -1,4 +1,5 @@
 ## News Board
+>_2022/05/03_ New features experimented, details introduced in [`notebooks`](https://github.com/qiaochen/VeloAE/tree/main/notebooks)
 
 >_2022/04/29_ VeloAE updated to 0.2.0. To simplify the project, the folder `notebooks` is reorganized and only notebooks involving veloAE experiments are kept, scvelo dynamical mode models are additionally included for comparison. The previous data are backuped in the branch [`paper-version-backup`](https://github.com/qiaochen/VeloAE/tree/paper-version-backup)
 
