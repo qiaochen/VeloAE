@@ -21,6 +21,7 @@ setup(
             'scipy',
             'pandas',
             'matplotlib',
+            'tqdm',
             'anndata>=0.7.4',
             'scanpy>=1.5.1',
             'scvelo>=0.2.2',
