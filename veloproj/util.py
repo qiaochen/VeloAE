@@ -18,6 +18,7 @@ from matplotlib import pyplot as plt
 from distutils.util import strtobool
 from sklearn.decomposition import PCA
 from .model import leastsq_pt, CANO_NAME_GAT, CANO_NAME_GCN
+from scipy.sparse import issparse
 from .baseline import leastsq_np
 
 scv.settings.verbosity = 0
@@ -172,7 +173,7 @@ def get_G_emb(adata, g_rep_dim):
         g_rep_dim (int): dimensionality of low-dim gene representations
     """
     mts = np.hstack([
-        adata.X.toarray().T, 
+        adata.X.toarray().T if issparse(adata.X) else adata.X.T, 
         adata.layers['Ms'].T, 
         adata.layers['Mu'].T
     ])
@@ -424,7 +425,8 @@ def construct_nb_graph_for_tgt(src_adata, tgt_adata, g_basis="SU", n_nb=30):
                   "S": src_adata.layers['spliced'], 
                   "U": src_adata.layers['unspliced']
                   }
-    tgt_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() for k in g_basis]))
+    tgt_adata.obsm['X_pca'] = PCA(n_components=100).fit_transform(np.hstack([basis_dict[k].toarray() if issparse(basis_dict[k]) else basis_dict[k]
+                                                                  for k in g_basis]))
     scv.pp.neighbors(tgt_adata, n_pcs=30, n_neighbors=n_nb)
     scv.pp.moments(tgt_adata, n_pcs=30, n_neighbors=n_nb)
     return tgt_adata
