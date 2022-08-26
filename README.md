@@ -1,3 +1,7 @@
+>A working [conda environment](https://connecthkuhk-my.sharepoint.com/:f:/g/personal/cqiao_connect_hku_hk/EowxAOqkS4FCpTo1u3Ysyy4BF7CX3wRFdx4BhrwfeAiThg?e=qfPvmc) could be downloaded.
+>Please follow the README.txt file there to activate this environment.
+>Once successfully activated, you may skip the installation steps.
+
 ## News Board
 >_2022/05/03_ New features experimented, details introduced in [`notebooks`](https://github.com/qiaochen/VeloAE/tree/main/notebooks)
 
@@ -30,7 +34,6 @@ Our revised manuscript is in progress, while the first version could be found in
 - scvelo>=0.2.2
 - [pytorch>=1.7](https://pytorch.org/get-started/locally/)
 - [pytorch-geometric>=1.6.3](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html)
-
 
 #### Install using pip
 
